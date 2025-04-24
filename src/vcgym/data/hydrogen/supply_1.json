@@ -1,0 +1,180 @@
+{
+    "energy_production": {
+        "constants": {
+            "N_C_U": 12,
+            "eta_C_U": 0.05,
+            "eta_C_L": 0.10,
+            "P_C_U": 750,
+            "eta_C_S": 8.124,
+            "eta_C_P": 159000,
+            "eta_N_T": 1087
+        },
+        "equations": {
+            "eq_1": {
+                "equation_name": "conversion_energy",
+                "target_node": "energy_production+",
+                "var_name": "old_energy_production"
+            },
+            "eq_2": {
+                "equation_name": "hydrogen_energy",
+                "target_node": "hydrogen_production+",
+                "var_name": "hydrogen_energy"
+            },
+            "eq_3": {
+                "equation_name":"conversion_energy",
+                "target_node": "hydrogen_conversion+",
+                "var_name": "conversion_energy"}
+        },
+        "constraints": {
+            "cons_1": {
+                "constraint_name": "power_lim",
+                "target_node": "energy_production",
+                "var_name": "power_lim_feas"
+            },
+            "cons_2":{
+                "constraint_name": "sup_lim",
+                "target_node": "energy_production",
+                "var_name": "sup_lim_feas"
+            },
+            "cons_3": {
+                "constraint_name": "ramp_up",
+                "target_node": "energy_production",
+                "var_name": "ramp_up_feas"
+            }, 
+            "cons_4": {
+                "constraint_name": "ramp_lo",
+                "target_node": "energy_production",
+                "var_name": "ramp_lo_feas"
+            }
+        },
+        "variables": {
+            "var_1": {
+                "name":"vector_production",
+                "domain":"positive_real"
+            },
+            "var_2": {
+                "name":"conversion_power",
+                "domain":"positive_real"
+            },
+            "var_3": {
+                "name":"supplemental_power",
+                "domain":"positive_real"
+            }
+        }
+    },
+    "hydrogen_production": {
+        "constants":{
+            "eta_H2": 0.85,
+            "E_H2_U": 400,
+            "E_H2_L": 80
+        },
+        "equations": {
+            "eq_1": {
+                "equation_name": "hydrogen_production",
+                "target_node": "vector_production",
+                "var_name": "hydrogen_production"
+            },
+            "eq_2": {
+                "equation_name":"hydrogen_storage",
+                "target_node": "hydrogen_production+",
+                "var_name": "old_hydrogen_storage"
+            }
+        },
+        "constraints":{
+            "cons_1": {
+                "constraint_name": "h2_store_up",
+                "target_node": "hydrogen_production",
+                "var_name": "ramp_up_feas"
+            },
+            "cons_2": {
+                "constraint_name": "h2_store_lo",
+                "target_node": "hydrogen_production",
+                "var_name": "h2_store_lo"
+            }
+        },
+        "variables": {
+            "var_1": {
+                "name":"hydrogen_power",
+                "domain":"positive_real"
+            }
+        }
+    },
+    "hydrogen_conversion": {
+        "constants": {
+            "eta_P_C": 21.6,
+            "eta_F_C": 0.4,
+            "E_C_U": 3000000,
+            "E_C_L": 600000,
+            "P_C_U": 135
+        },
+        "equations": {
+            "eq_1":{
+                "name": "vector_production",
+                "target_node":"shipping",
+                "var_name":"vector_production"
+            },
+            "eq_2":{
+                "name": "vector_storage",
+                "target_node":"hydogen_conversion+",
+                "var_name":"old_vector_storage"
+            }
+        },
+        "constraints": {
+            "cons_1": {
+                "constraint_name": "vec_store_up",
+                "target_node": "hydrogen_conversion",
+                "var_name": "vec_store_up_feas"
+            },
+            "cons_2": {
+                "constraint_name": "vec_store_lo",
+                "target_node": "hydrogen_conversion",
+                "var_name": "vec_store_up_feas"
+            }
+        },
+        "variables": {
+            "var_1": {
+                "name":"vector_power",
+                "domain":"positive_real"
+            }
+        }
+    },
+    "shipping": {
+        "constants": {
+            "E_M_U": 1020000,
+            "P_M_U": 127500,
+            "eta_C_H2": 42500000,
+            "eta_C_M": 3733500,
+            "eta_C_M_W": 7800
+        },
+        "equations": {
+            "eq_1": {
+                "equation_name": "num_ships",
+                "target_node": "shipping+",
+                "var_name": "shipping"
+            },
+            "eq_2": {
+                "equation_name": "shipping_energy",
+                "target_node": "shipping+",
+                "var_name": "shipping_energy"
+            },
+            "variables":{
+                "var_1": {
+                    "name":"ship_order",
+                    "domain":"positive_integer"
+                }
+            }
+        },
+         "constraints": {
+            "cons_1": {
+                "constraint_name": "ship_disc_lim",
+                "target_node": "shipping",
+                "var_name": "ship_disc_lim_feas"
+            },
+            "cons_2": {
+                "constraint_name": "total_disc_lim",
+                "target_node": "shipping",
+                "var_name": "total_disc_lim_feas"
+            }   
+        }
+    }
+}

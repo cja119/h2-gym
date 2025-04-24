@@ -6,7 +6,6 @@ from ..node import Node
 from .builder import GraphBuilder
 from typing import Union, Optional
 from collections import OrderedDict
-from .utils import pt_func
 from re import sub as re_sub
 class SpaceGraph:
     """
