@@ -4,9 +4,10 @@ This module contains the Graph class, which is used to represent a graphical str
 from __future__ import annotations
 from ..node import Node
 from .builder import GraphBuilder
-from typing import Union
+from typing import Union, Optional
 from collections import OrderedDict
-
+from .utils import pt_func
+from re import sub as re_sub
 class SpaceGraph:
     """
     
@@ -25,6 +26,7 @@ class SpaceGraph:
         self._built = False
         self._acyclic = True
         self._adjacency_matrix = None
+        self._state = 0
 
         return None
 
@@ -35,6 +37,18 @@ class SpaceGraph:
         if key not in self._nodes:
             raise ValueError(f"Node {key} not found in the graph")
         return self._nodes[key]
+    
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        state = self._state
+        if self._state >= len(self._nodes):
+            self._state = 0
+            raise StopIteration  # 🛑 Termination condition
+        self._state += 1
+        keys = list(self._nodes.keys())
+        return self[keys[state]]
 
     def builder(self) -> GraphBuilder:
         """
@@ -57,25 +71,32 @@ class SpaceGraph:
         
         if node_id not in self._nodes:
             raise ValueError(f"Node {node_id} not found in the graph")
-        if output_id not in self._nodes:
+        if re_sub(r"[+]","",output_id) not in self._nodes:
             raise ValueError(f"Node {output_id} not found in the graph")
         else:
             self._edges.append((node_id, output_id))
             self._nodes[node_id].set_output(output_id)
-            self._nodes[output_id].set_input(node_id)
-            if (
-                list(self._nodes.keys()).index(node_id) > \
-                    list(self._nodes.keys()).index(output_id)
-            ):
-                self._acyclic = False
+            self._nodes[re_sub(r"[+]","",output_id)].set_input(node_id)
+            if output_id[-1] != '+':
+                if (
+                    list(self._nodes.keys()).index(node_id) > \
+                        list(self._nodes.keys()).index(output_id)
+                ):
+                    self._acyclic = False
         return None
 
-    def evaluate(self) -> None:
+    def evaluate(self,graph_inputs: Optional[dict] = None) -> None:
         """
-        Evaluates the graph.
+        Evaluates the graph. If no input is given we take the values stored in the nodes
+        as the default initialisation. 
         """
+        if graph_inputs is not None:
+            for edge,input in graph_inputs.items():
+                if edge not in self._nodes:
+                    raise ValueError(f"Node {edge} not found in the graph")
+                self._nodes[edge].set_input(input)
+        
         graph_outs = {}
-
         for id,node in self._nodes.items():
             outs = node.evaluate()
             pops = []
@@ -93,6 +114,30 @@ class SpaceGraph:
                 for edge,out in outs.items():
                     self._nodes[edge].set_input(out)
         return graph_outs 
+
+    def linearise(self) -> None:
+        """
+        Linearises the graph. This is done by removing the edges that are not needed
+        to evaluate the graph. 
+        """
+        if not self._acyclic:
+            raise ValueError("Graph is not acyclic")
         
-                
-        #return None
+        _keys = list(self._nodes.keys())
+        _vars = None
+
+        # Perform one pass through the graph to linearise it internally 
+        for (origin, target) in zip(_keys, _keys[1:] + [_keys[0]+'+']):
+            _vars = self._nodes[origin].linearize(target,_vars)
+        
+        # Determine the new output set
+        outs = self.evaluate()
+        print(outs)
+
+        # If the outputs still skip any nodes, continue linearising. 
+        while len(outs.keys()) > 1 or list(outs.keys())[0] != _keys[0]:
+            _vars = {key if key[-1] != '+' else key[:-1]: var for key, var in _vars.items()}
+            for (origin, target) in zip(_keys, _keys[1:] + [_keys[0]+'+']):
+                _vars = self._nodes[origin].linearize(target,_vars)
+            outs = self.evaluate()
+        return None

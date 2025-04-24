@@ -2,7 +2,7 @@
 This module contains the Variables class, which is used to represent the variables of the node.
 """
 from __future__ import annotations
-from typing import Union, Optional, List
+from typing import Union, Optional, List 
 import re
 
 class Variables:
@@ -27,7 +27,7 @@ class Variables:
         """
         if not isinstance(key, str):
             raise TypeError(f"Key {key} must be a string")
-        if not isinstance(value, (float, int)):
+        if not isinstance(value, (float, int, type(None))):
             raise TypeError(f"Value {value} must be a float or an integer")
         
         self._vars[key] = value

@@ -13,6 +13,7 @@ class Functions:
         self._funcs = {}
         self._targs = {}
         self._collection = {}
+        self._vals = None
         self._id = id
         self._outputs = outputs
         pass
@@ -31,10 +32,7 @@ class Functions:
         if targ is not None:
             if not isinstance(targ, (float, int, str)):
                 raise TypeError(f"Target {targ} must be a float or an integer")
-            if (
-                re.sub(r"[+]","",targ) not in self._outputs 
-                and re.sub(r"[+]","",targ) != self._id
-                ):
+            if targ not in self._outputs:
                 raise ValueError(f"Target {targ} not found in outputs")
             self._targs[key] = targ
         else:
@@ -102,6 +100,30 @@ class Functions:
                 raise KeyError(f"Key {k} not found in targets")
 
             res[self._targs[k]][k] = v(vars)
-        
+        self._vals = res
         return res
+    
+    def linearise(self,targ):
+        """
+        This function linearises the functions of the node.
+        """
+        new_vars = {}
+        for key, func in self._funcs.items():
+            if (
+                self._vals is not None and
+                self._targs[key] in self._vals
+                ):
+                val = self._vals[self._targs[key]][key]
+            else:
+                val = None
+            if self._targs[key] == self._id or self._targs[key] == targ:
+                continue
+            else:
+                if self._targs[key] not in new_vars:
+                    new_vars[self._targs[key]] = {}
+                new_vars[self._targs[key]][key] = val
+                self._targs[key] = targ
+        return new_vars
+
+
     

@@ -21,3 +21,18 @@ class Isochronous():
 
         return None
     
+    def back_pass(self, node: Node) -> None:
+        """
+        Back propagates the graph.
+        """
+        self._node = node
+        return None
+    
+    def forward_pass(self, node: Node) -> None:
+        """
+        Forward propagates the graph.
+        """
+        outs = self._node.evaluate()
+
+        return None
+    
