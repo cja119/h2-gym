@@ -3,20 +3,23 @@ Implements the node class
 """
 
 from __future__ import annotations
-from typing import Union
+from typing import Union, Optional
+from .props import Functions, Variables
+
 
 class Node:
-    def __init__(self) -> None:
+    def __init__(self, node_id = Optional[Union[float,str,int]]) -> None:
         """
         Initializes the node class
         """
-        self._id = None
+        self._id = node_id
         self._inputs = []
-        self._outputs = []
+        self._outputs = {}
         self._params = {}
         self._metadata = {}
-        self._funcs = []
-        self._vars = {}
+        self._props = ["functions", "variables"]
+        self._funcs = None
+        self._vars = None
         self._name = None
 
     def __enter__(self) -> Node:
@@ -50,9 +53,13 @@ class Node:
         Gets the value of the node
         """
         if key == "variables":
-            return self.add_vars
+            if self._vars is None:
+                self._vars = Variables(self._id, self._outputs)
+            return self._vars
         elif key == "functions":
-            return self.add_funcs
+            if self._funcs is None:
+                self._funcs = Functions(self._id, self._outputs)
+            return self._funcs
         else:
             raise KeyError(f"Key {key} not found in node")
         
@@ -107,9 +114,10 @@ class Node:
         """
         Sets the outputs of the node
         """
-        self._outputs.append(outputs)
+        for output in outputs:
+            self._outputs[output] = {}
 
-    def get_outputs(self) -> list:
+    def get_outputs(self) -> dict:
         """
         Returns the outputs of the node
         """
@@ -126,3 +134,26 @@ class Node:
         Returns the name of the node
         """
         return self._name
+    
+    def evaluate(self) -> None:
+        """
+        Synchronizes the node
+        """
+        if self._funcs is not None:
+            outs = self._funcs.evaluate(self._vars.get_vars())
+        else:
+            if self._vars is None:
+                outs = None
+            else:
+                outs = self._vars.get_vars()
+        return outs
+    
+    def set_var(self, vars: dict) -> None:
+        """
+        Sets the variable of the node
+        """
+        for key, value in vars.items():
+            if key not in self._vars:
+                raise KeyError(f"Key {key} not found in variables")
+            self._vars[key] = value
+        return None

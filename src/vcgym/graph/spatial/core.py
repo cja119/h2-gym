@@ -6,7 +6,6 @@ from ..node import Node
 from .builder import GraphBuilder
 from typing import Union
 from collections import OrderedDict
-import jax.numpy as jnp
 
 class SpaceGraph:
     """
@@ -21,6 +20,7 @@ class SpaceGraph:
         self._acyclic = None
         self._connected = None
         self._nodes = OrderedDict()
+        self._props = ["edges", "nodes"]
         self._edges = []
         self._built = False
         self._acyclic = True
@@ -46,7 +46,7 @@ class SpaceGraph:
         """
         Adds a node to the graph.
         """
-        self._nodes[node_id] = Node()
+        self._nodes[node_id] = Node(node_id)
         return None
     
     def add_edge(self, node_id: Union[int,float,str],
@@ -69,4 +69,30 @@ class SpaceGraph:
             ):
                 self._acyclic = False
         return None
-    
+
+    def evaluate(self) -> None:
+        """
+        Evaluates the graph.
+        """
+        graph_outs = {}
+
+        for id,node in self._nodes.items():
+            outs = node.evaluate()
+            pops = []
+            if outs is not None:
+                for key in outs:
+                    if key[-1] =='+':
+                        graph_outs[key[:-1]] = outs[key]
+                        pops.append(key)
+                    else:
+                        pass
+                
+                for key in pops:
+                    outs.pop(key)
+                
+                for edge,out in outs.items():
+                    self._nodes[edge].set_input(out)
+        return graph_outs 
+        
+                
+        #return None

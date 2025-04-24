@@ -46,7 +46,8 @@ class GraphBuilder:
     def build(self) -> None:
         """
         Builds the graph
-        """
+        """ 
+
         return None
                 
             
