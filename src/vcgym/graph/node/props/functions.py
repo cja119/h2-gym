@@ -13,13 +13,15 @@ class Functions:
         self._funcs = {}
         self._targs = {}
         self._collection = {}
+        self._varname = {}
         self._vals = None
         self._id = id
         self._outputs = outputs
         pass
 
     def add(self, value: FunctionType, key: Union[str, int, float],
-            targ: Optional[Union[float, int, str]] = None) -> None:
+            targ: Optional[Union[float, int, str]] = None,
+            varname: Optional[Union[float, int, str]] = None) -> None:
         """
         Adds a function to the node.
         """
@@ -29,11 +31,15 @@ class Functions:
             raise TypeError(f"Value {value} must be a float or an integer")
         
         self._funcs[key] = value
+        if varname is not None:
+            self._varname[key] = varname
+        else:
+            self._varname[key] = key
         if targ is not None:
             if not isinstance(targ, (float, int, str)):
                 raise TypeError(f"Target {targ} must be a float or an integer")
             if targ not in self._outputs:
-                raise ValueError(f"Target {targ} not found in outputs")
+                raise ValueError(f"Target {targ} not found in outputs of node {self._id}")
             self._targs[key] = targ
         else:
             self._targs[key] = self._id
@@ -99,10 +105,10 @@ class Functions:
             if k not in self._targs:
                 raise KeyError(f"Key {k} not found in targets")
 
-            res[self._targs[k]][k] = v(vars)
+            res[self._targs[k]][self._varname[k]] = v(vars)
         self._vals = res
         return res
-    
+        
     def linearise(self,targ):
         """
         This function linearises the functions of the node.
@@ -121,9 +127,16 @@ class Functions:
             else:
                 if self._targs[key] not in new_vars:
                     new_vars[self._targs[key]] = {}
-                new_vars[self._targs[key]][key] = val
+                new_vars[self._targs[key]][self._varname[key]] = val
                 self._targs[key] = targ
+        
         return new_vars
 
-
+    def get_collection(self, name:str) -> list:
+        """
+        Returns the collection of functions.
+        """
+        if name not in self._collection:
+            raise KeyError(f"Key {name} not found in collection")
+        return {idx: self._funcs[idx] for idx in self._collection[name]}
     

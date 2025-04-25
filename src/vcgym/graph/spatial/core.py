@@ -7,6 +7,7 @@ from .builder import GraphBuilder
 from typing import Union, Optional
 from collections import OrderedDict
 from re import sub as re_sub
+
 class SpaceGraph:
     """
     
@@ -111,6 +112,7 @@ class SpaceGraph:
                     outs.pop(key)
                 
                 for edge,out in outs.items():
+                    print(edge, out)
                     self._nodes[edge].set_input(out)
         return graph_outs 
 
@@ -124,19 +126,47 @@ class SpaceGraph:
         
         _keys = list(self._nodes.keys())
         _vars = None
+        _rngs = None
+
 
         # Perform one pass through the graph to linearise it internally 
         for (origin, target) in zip(_keys, _keys[1:] + [_keys[0]+'+']):
-            _vars = self._nodes[origin].linearize(target,_vars)
+            _vars = self._nodes[origin].linearize(target,_vars,_rngs)
+            _rngs = {}
+            if _vars is not None:
+                for targ in _vars:
+                    if targ not in _rngs:
+                        _rngs[targ] = {}
+                    for val in _vars[targ]:
+                        _rngs[targ][val] \
+                            = self._nodes[re_sub(r"[+]","",targ)]['variables']\
+                                .get_rng(val)
         
         # Determine the new output set
         outs = self.evaluate()
-        print(outs)
 
         # If the outputs still skip any nodes, continue linearising. 
         while len(outs.keys()) > 1 or list(outs.keys())[0] != _keys[0]:
+
+            # As we have passed through the graph, we remove a single '+' from the keys (if they have them)
             _vars = {key if key[-1] != '+' else key[:-1]: var for key, var in _vars.items()}
+            _rngs = {key if key[-1] != '+' else key[:-1]: rng for key, rng in _rngs.items()}
+
+            # Perform a pass through the graph to linearise it internally
             for (origin, target) in zip(_keys, _keys[1:] + [_keys[0]+'+']):
-                _vars = self._nodes[origin].linearize(target,_vars)
+                _vars = self._nodes[origin].linearize(target,_vars, _rngs)
+                _rngs = {}
+
+                # For each target variable, we go to its node to get its range. 
+                if _vars is not None:
+                    for targ in _vars:
+                        if targ not in _rngs:
+                            _rngs[targ] = {}
+                        for val in _vars[targ]:
+                            _rngs[targ][val] \
+                                = self._nodes[re_sub(r"[+]","",targ)]['variables']\
+                                    .get_rng(val)
+                
+            # Synchronising the functions
             outs = self.evaluate()
         return None

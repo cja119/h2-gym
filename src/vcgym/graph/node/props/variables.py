@@ -9,8 +9,8 @@ class Variables:
 
     def __init__(self, id: Union[str,float], outputs: dict) -> None:
         self._vars = {}
-        self._targs = {}
         self._collection = {}
+        self._rngs = {}
         self._id = id
         self._outputs = outputs
         pass
@@ -21,7 +21,8 @@ class Variables:
         """
         return self._vars
 
-    def add(self, key: str, value: Union[float, int], targ: Optional[Union[float, int]] = None) -> None:
+    def add(self, key: str, value: Union[float, int],
+            range: Optional[list[Union[float,int]]] = None) -> None:
         """
         Adds a variable to the node.
         """
@@ -31,17 +32,8 @@ class Variables:
             raise TypeError(f"Value {value} must be a float or an integer")
         
         self._vars[key] = value
-        if targ is not None:
-            if not isinstance(targ, (float, int)):
-                raise TypeError(f"Target {targ} must be a float or an integer")
-            if (
-                re.sub(r"[+-]","",targ) not in self._outputs 
-                and re.sub(r"[+-]","",targ) != self._id
-                ):
-                raise ValueError(f"Target {targ} not found in outputs")
-            self._targs[key] = targ
-        else:
-            self._targs[key] = self._id
+        self._rngs[key] = range
+
     
     def __getitem__(self, key: Union[str,float,int]) -> Union[float,int,dict]:
         """
@@ -72,6 +64,15 @@ class Variables:
         Checks if the variable exists in the node.
         """
         return key in self._vars
+    
+    def get_rng(self, key: str) -> Optional[list[Union[float,int]]]:
+        """
+        Returns the range of the variable.
+        """
+        if key not in self._rngs:
+            return None
+        
+        return self._rngs[key]
 
     def collection(self, key: str, value: List[Union[str,float,int]]) -> None:
         """
@@ -92,3 +93,11 @@ class Variables:
                 raise KeyError(f"Key {v} not found in variables. Add the variables first") 
         self._collection[key] = value
         return None
+    
+    def get_collection(self, name:str) -> dict:
+        """
+        Returns the collection of functions.
+        """
+        if name not in self._collection:
+            raise KeyError(f"Key {name} not found in collection")
+        return {idx: self._vars[idx] for idx in self._collection[name]}

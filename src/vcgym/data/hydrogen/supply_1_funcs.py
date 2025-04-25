@@ -1,55 +1,69 @@
-def conversion_energy(U,V,etas):
-    return V[1] # P_C
+def conversion_energy(vars):
+    return vars['conversion_power'] # P_C
 
-def hydrogen_energy(U,V,etas):
-    return  V[2] # P_H_2
+def hydrogen_energy(vars):
+    return  vars['hydrogen_power'] # P_H_2
 
-def hydrogen_production(U,V,etas):
-    return V[0]  # P_H2_out
+def hydrogen_production(vars):
+    return vars['hydrogen_power']  # P_H2_out
 
-def hydrogen_storage(U,V,etas):
-    return U[1,1] / etas['eta_H2'] + U[2,1] - V[0] #P_H2/eta_H2 + E'_H2 - P_H2_out 
+def hydrogen_storage(vars):
+    return vars['hydrogen_energy'] / vars['eta_H2'] + vars['old_hydrogen_storage'] - vars['eta_P_C'] * \
+        ((1 - vars['eta_F_C']) * vars['conversion_energy'] + \
+         vars['eta_F_C'] * (vars['conversion_energy'] //vars['P_C_U'])) #P_H2/eta_H2 + E'_H2 - P_H2_out 
 
-def vector_production(U,V,etas):
-    return V[0]
+def vector_production(vars):
+    return  vars['eta_P_C'] * ((1 - vars['eta_F_C']) * vars['conversion_energy'] + \
+                        vars['eta_F_C'] * (vars['conversion_energy'] //vars['P_C_U']))
 
-def vector_storage(U,V,etas):
-    return U[3,1] + etas['eta_P_C'] * ((1 - etas['eta_F_C']) * U[1,1] + etas['eta_F_C'] *\
-                                     (U[1,1]//etas['P_C_U'])) - V[0] # 
+def vector_output(vars):
+    return vars['vector_power']
 
-def num_ships(U,V,etas):
-    return U[4,1] + V[0] - ((U[4,2] + U[3,1]) // (etas['E_M_U']))
+def vector_storage(vars):
+    return vars['old_vector_storage'] + vars['vector_production'] - vars['vector_power'] # 
 
-def shipping_energy(U,V,etas):
-    return U[4,2] + U[3,1] - etas['E_M_U'] * ((U[4,2] + U[3,1]) // (etas['E_M_U']))
+def num_ships(vars):
+    return vars['old_ships'] + vars['ship_order'] - ((vars['old_shipping_energy'] +\
+                                                       vars['vector_production']) // (vars['E_M_U']))
 
-def power_lim(U,V,etas):
-    return V[0] + V[1] - V[2] - U[0,1]*etas["eta_N_T"]
+def shipping_energy(vars):
+    return vars['old_shipping_energy'] + vars['vector_production'] - vars['E_M_U'] * \
+        ((vars['old_shipping_energy'] + vars['vector_production']) // (vars['E_M_U']))
 
-def sup_lim(U,V,etas):
-    return V[2] - V[1]
+def power_lim(vars):
+    return vars['conversion_power']+ vars['hydrogen_power']- vars['supplemental_power'] \
+        - vars['renewable_power']*vars["eta_N_T"]
 
-def ramp_up(U,V,etas):
-    return V[1] - U[1,1] - (etas['N_C_U'] - V[1] // etas['P_C_U']) * etas['eta_C_U']
+def sup_lim(vars):
+    return vars['supplemental_power'] - vars['conversion_power']
 
-def ramp_lo(U,V,etas):
-    return U[1,1] - V[1]  + (V[1] // etas['P_C_U']) * etas['eta_C_L']
+def ramp_up(vars):
+    return vars['conversion_power'] - vars['old_conversion_power'] - \
+        (vars['N_C_U'] - vars['conversion_power'] // vars['P_C_U']) * vars['eta_C_U']
+
+def ramp_lo(vars):
+    return vars['old_conversion_power'] - vars['conversion_power'] + \
+        (vars['conversion_power'] // vars['P_C_U']) * vars['eta_C_L']
     
-def h2_store_up(U,V,etas):
-    return U[1,1] / etas['eta_H2'] + U[1,1] - V[0] - etas["E_H2_U"]
+def h2_store_up(vars):
+    return vars['hydrogen_energy'] / vars['eta_H2'] + vars['old_hydrogen_storage'] - vars['eta_P_C'] * \
+        ((1 - vars['eta_F_C']) * vars['conversion_energy'] + \
+                        vars['eta_F_C'] * (vars['conversion_energy'] //vars['P_C_U'])) - vars["E_H2_U"]
 
-def h2_store_lo(U,V,etas):
-    return V[0] - U[1,1] / etas['eta_H2'] - U[2,1]  + etas["E_H2_L"]
+def h2_store_lo(vars):
+    return vars['eta_P_C'] * ((1 - vars['eta_F_C']) * vars['conversion_energy'] +  vars['eta_F_C'] * \
+                (vars['conversion_energy'] //vars['P_C_U'])) - vars['hydrogen_energy'] /\
+                      vars['eta_H2'] - vars['old_hydrogen_storage'] + vars["E_H2_L"]
 
-def vec_store_up(U,V,etas):
-    return U[3,1] + etas['eta_P_C'] * ((1 - etas['eta_F_C']) * U[1,1] + etas['eta_F_C'] *\
-                                     (U[1,1]//etas['P_C_U'])) - V[0] - etas['E_C_U']
+def vec_store_up(vars):
+    return vars['old_vector_storage']+ vars['vector_production'] - vars['vector_power'] - vars['E_C_U']
 
-def vec_store_lo(U,V,etas):
-    return V[0] - U[3,1] - etas['eta_P_C'] * ((1 - etas['eta_F_C']) * U[1,1] + etas['eta_F_C'] *\
-                                     (U[1,1]//etas['P_C_U'])) + etas['E_C_L']
-def ship_disc_lim(U,V,etas):
-    return U[3,1] - (U[4,1] + V[0] - (U[4,2] + U[3,1]) // etas['E_M_U']) *  etas['P_M_U']
+def vec_store_lo(vars):
+    return vars['vector_power'] - vars['old_vector_storage'] - vars['vector_production'] + vars['E_C_L']
 
-def total_disc_lim(U,V,etas):
-    return U[4,2] + U[3,1] - etas['E_M_U'] * (U[4,1] + V[0])
+def ship_disc_lim(vars):
+    return vars['vector_production'] - (vars['old_ships'] + vars['ship_order'] - (vars['old_shipping_energy'] +\
+                vars['vector_production']) // vars['E_M_U']) *  vars['P_M_U']
+
+def total_disc_lim(vars):
+    return vars['old_shipping_energy'] + vars['vector_production'] - vars['E_M_U'] * (vars['old_ships'] + vars['ship_order'] )

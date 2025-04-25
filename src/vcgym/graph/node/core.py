@@ -146,10 +146,11 @@ class Node:
         if self._funcs is not None:
             outs = self._funcs.evaluate(self._vars.get_vars())
         else:
-            if self._vars is None:
-                outs = None
-            else:
-                outs = self._vars.get_vars()
+            outs = None
+            #if self._vars is None:
+            #    outs = None
+            #else:
+            #    outs = self._vars.get_vars()
         return outs
     
     def set_var(self, vars: dict) -> None:
@@ -162,7 +163,7 @@ class Node:
             self._vars[key] = value
         return None
     
-    def linearize(self,targ,new_fns) -> None:
+    def linearize(self,targ,new_fns,new_rngs) -> None:
         """
         Linearizes the node
         """
@@ -175,7 +176,7 @@ class Node:
             new_vars = self._funcs.linearise(targ)
         else:
             new_vars = None
-        
+
         # If we are being passed some functions (variables)
         # to bypass do so
         if new_fns is not None:
@@ -183,30 +184,32 @@ class Node:
             for output in new_fns:
                 # pt_func adds a function that 'carries' a variable through the
                 # node. We add this as a variable and a function.
-                for name,var in new_fns[output].items():
+                for (name,var),rng in zip(new_fns[output].items(),new_rngs[output].values()):
                     self['variables'].add(
-                        name,
-                        var
+                        key = name,
+                        value = var,
+                        range = rng
                     )
                     self['functions'].add(
-                        pt_func(name),
-                        name+'_pt',
-                        targ
+                        value = pt_func(name),
+                        key = name+'_pt',
+                        targ = targ
                         )
                 # If this node is  the destination of this variable, we delete it from
                 #  the bypass function dictouanry
+                
                 if output == self._id:
                     _dels.append(output)
 
             # Delete  the variables from the bypass
             for key in _dels:
                 new_fns.pop(key, None)
-           
+            
             # Handling the edge cases.
+
             if new_vars is not None:
-                return new_fns.update(new_vars)
-            else:
-                return new_fns
+                new_fns.update(new_vars)
+            return new_fns
         # Handling the edge cases.
         else:
             return new_vars
