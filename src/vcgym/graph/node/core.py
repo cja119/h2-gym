@@ -158,9 +158,10 @@ class Node:
         Sets the variable of the node
         """
         for key, value in vars.items():
-            if key not in self._vars:
+            if key not in self._vars and key[-3:] != '_pt':
                 raise KeyError(f"Key {key} not found in variables")
-            self._vars[key] = value
+            else:
+                self._vars[key] = value
         return None
     
     def linearize(self,targ,new_fns,new_rngs) -> None:
@@ -182,25 +183,27 @@ class Node:
         if new_fns is not None:
             _dels = []
             for output in new_fns:
-                # pt_func adds a function that 'carries' a variable through the
-                # node. We add this as a variable and a function.
-                for (name,var),rng in zip(new_fns[output].items(),new_rngs[output].values()):
-                    self['variables'].add(
-                        key = name,
-                        value = var,
-                        range = rng
-                    )
-                    self['functions'].add(
-                        value = pt_func(name),
-                        key = name+'_pt',
-                        targ = targ
-                        )
+
                 # If this node is  the destination of this variable, we delete it from
                 #  the bypass function dictouanry
-                
                 if output == self._id:
                     _dels.append(output)
 
+                # pt_func adds a function that 'carries' a variable through the
+                # node. We add this as a variable and a function.
+                else:
+                    for (name,var),rng in zip(new_fns[output].items(),new_rngs[output].values()):
+                        self['variables'].add(
+                            key = name + '_pt',
+                            value = var,
+                            range = rng
+                        )
+                        self['functions'].add(
+                            value = pt_func(name+'_pt'),
+                            key = name+'_pt',
+                            targ = targ
+                            )
+    
             # Delete  the variables from the bypass
             for key in _dels:
                 new_fns.pop(key, None)

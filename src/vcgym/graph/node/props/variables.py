@@ -52,6 +52,12 @@ class Variables:
         """
         Sets the value of the variable.
         """
+        if key[-3:] == '_pt':
+            self.add(key, value)
+            if 'pt' not in self._collection:
+                self._collection['pt'] = []
+            self._collection['pt'] = [key]  
+
         if key not in self._vars:
             raise KeyError(f"Key {key} not found in variables")
         

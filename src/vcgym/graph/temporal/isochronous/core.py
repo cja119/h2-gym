@@ -36,3 +36,14 @@ class Isochronous():
 
         return None
     
+    def linearise(self) -> None:
+        """
+        Linearises the graph. This is done by removing the edges that are not needed
+        to evaluate the graph. 
+        """
+        node_outs = None
+        while node_outs is None or len(node_outs[0]) > 1:
+            node_outs = self._node.linearise(node_outs)
+
+        return None
+    

@@ -48,6 +48,11 @@
                     "name": "hydrogen_energy",
                     "target_node": "hydrogen_production",
                     "var_name": "hydrogen_energy"
+                },
+                "eq_3": {
+                    "name": "conversion_energy",
+                    "target_node": "hydrogen_production",
+                    "var_name": "conversion_energy"
                 }
             },
             "constraints": {

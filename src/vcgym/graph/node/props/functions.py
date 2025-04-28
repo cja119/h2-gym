@@ -119,7 +119,7 @@ class Functions:
                 self._vals is not None and
                 self._targs[key] in self._vals
                 ):
-                val = self._vals[self._targs[key]][key]
+                val = self._vals[self._targs[key]][self._varname[key]]
             else:
                 val = None
             if self._targs[key] == self._id or self._targs[key] == targ:
@@ -129,6 +129,7 @@ class Functions:
                     new_vars[self._targs[key]] = {}
                 new_vars[self._targs[key]][self._varname[key]] = val
                 self._targs[key] = targ
+                self._varname[key] += '_pt'
         
         return new_vars
 
