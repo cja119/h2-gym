@@ -37,7 +37,7 @@ class HydrogenSupply:
         """
         Gets the data from the json file
         """
-        current_path = Path(__file__).parent.parent.parent.parent/"data/hydrogen"
+        current_path = Path(__file__).parent.parent.parent/"data/supply"
 
         data, module = module_loader(current_path, self.file)
         
