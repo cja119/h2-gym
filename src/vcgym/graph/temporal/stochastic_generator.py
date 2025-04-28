@@ -29,6 +29,8 @@ class StochasticGenerator:
             node['variables'][varname] = self.dataset[self._time]
         
         self.target = node['variables'][varname] 
+        self._varname = varname
+        self.node_id = node.get_id()
 
     def bind_dataset(self, path, filenames):
         """
@@ -58,3 +60,4 @@ class StochasticGenerator:
         """
         self._time += 1
         self.target = self.dataset[self._time % self._maxtime]
+        return {self.node_id: {self._varname: self.target}}

@@ -12,12 +12,13 @@ class Isochronous():
     graph is isochronous, meaning that the node morphology is time-inedependent. 
     """
 
-    def __init__(self, node) -> None:
+    def __init__(self, node, generator: None) -> None:
         """
         Initializes the temporal graph.
         """
         self._node = node
         self._props = node._props
+        self._generator = generator
 
         return None
     
@@ -28,6 +29,17 @@ class Isochronous():
         self._node = node
         return None
     
+    def step(self,inputs: dict) -> None:
+        """
+        Steps the graph.
+        """
+        if self._generator is not None:
+            update = self._generator.update()
+            for key, var in update.items():
+                self._node[key].set_var(var)
+    
+        return self._node.evaluate(inputs)
+
     def forward_pass(self, node: Node) -> None:
         """
         Forward propagates the graph.

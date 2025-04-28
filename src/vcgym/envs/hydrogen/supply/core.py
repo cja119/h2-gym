@@ -26,8 +26,9 @@ class HydrogenSupply:
         """
         self.file = json_file
         self.space_graph = SpaceGraph()
-        self.graph = Isochronous(self.space_graph)
-        self.graph.generator = StochasticGenerator()
+        self.generator = StochasticGenerator()
+        self.graph = Isochronous(self.space_graph,self.generator)
+        
         self.get_data()
 
         return None
@@ -57,11 +58,11 @@ class HydrogenSupply:
             add_controls(node, data)
 
         for _, value in data['uncertainties'].items():
-            self.graph.generator.bind_dataset(
+            self.generator.bind_dataset(
                 path = current_path,
                 filenames = value['files']
                 )
-            self.graph.generator.bind_variable(
+            self.generator.bind_variable(
                 self.space_graph[value['target_node']],
                 value['var_name']
                 )
