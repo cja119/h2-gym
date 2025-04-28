@@ -3,7 +3,7 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "vc_gym"
+name = "h2_gym"
 version = "0.1"
 description = "RL environments for graph-structured value chain problems"
 authors = [
@@ -14,5 +14,6 @@ requires-python = ">=3.8"
 dependencies = [
   "meteor_py  @ git+https://github.com/cja119/meteor_py.git",
   "numpy",
-  "jax"
+  "jax",
+  "mu_F @ git+https://github.com/mawbray/mu.F.git"
 ]
