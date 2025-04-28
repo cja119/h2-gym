@@ -2,7 +2,6 @@
 
 """
 from __future__ import annotations
-from ...spatial import SpaceGraph
 from ...node import Node
 
 

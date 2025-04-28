@@ -13,6 +13,6 @@ setup(
         "meteor_py  @ git+https://github.com/cja119/meteor_py.git",
         "numpy",
         "jax",
-        "mu_F @ git+https://github.com/mawbray/mu.F.git"
+        #"mu_F @ git+https://github.com/mawbray/mu.F.git"
     ]
 )

@@ -2,9 +2,9 @@
 
 """
 from __future__ import annotations
-from vcgym.graph.spatial import SpaceGraph
-from vcgym.graph.temporal import StochasticGenerator
-from vcgym.graph.temporal import Isochronous
+from h2_gym.graph.spatial import SpaceGraph
+from h2_gym.graph.temporal import StochasticGenerator
+from h2_gym.graph.temporal import Isochronous
 from pathlib import Path
 from .utils import (
     add_constants,
