@@ -1,4 +1,4 @@
-# VC-GYM
+# H2-GYM
 
 A collection of environments for modelling (sustainable) hydrogen value chain problems, using Open-AI's gymnasium interface. 
 
