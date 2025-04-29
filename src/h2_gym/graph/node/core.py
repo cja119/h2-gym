@@ -164,7 +164,7 @@ class Node:
                 self._vars[key] = value
         return None
     
-    def linearize(self,targ,new_fns,new_rngs) -> None:
+    def linearise(self,targ,new_fns,new_rngs) -> None:
         """
         Linearizes the node
         """

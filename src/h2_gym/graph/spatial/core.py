@@ -132,7 +132,7 @@ class SpaceGraph:
 
         # Perform one pass through the graph to linearise it internally 
         for (origin, target) in zip(_keys, _keys[1:] + [_keys[0]+'+']):
-            _vars = self._nodes[origin].linearize(target,_vars,_rngs)
+            _vars = self._nodes[origin].linearise(target,_vars,_rngs)
             _rngs = get_rang(self._nodes, _vars)
         
         # Determine the new output set
