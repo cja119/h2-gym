@@ -17,3 +17,8 @@ dependencies = [
   "jax",
   #"mu_F @ git+https://github.com/mawbray/mu.F.git"
 ]
+
+[project.optional-dependencies]
+supply = ["gymnasium"]
+shipping = ["pyomo"]
+all = ["gymnasium","pyomo"]

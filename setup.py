@@ -14,5 +14,13 @@ setup(
         "numpy",
         "jax",
         #"mu_F @ git+https://github.com/mawbray/mu.F.git"
-    ]
+    ], 
+    extras_require={
+        "supply": ["gymnasium"],
+        "shipping": ["pyomo"],
+        "all": [
+            "gymnasium",
+            "pyomo",
+        ]
+    }
 )
