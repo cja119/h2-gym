@@ -1,0 +1,12 @@
+consumer:
+  constants:
+    storage_capacity: 
+
+  equations:
+    eq_1:
+      name: storage_balance
+      target_node: producer
+      var_name: old_storage
+      
+    eq_2:
+      

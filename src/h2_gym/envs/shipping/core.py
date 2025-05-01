@@ -7,6 +7,10 @@ from h2_gym.data.shipping import NGDemand
 from h2_gym.graph.temporal import StochasticGenerator, Isochronous
 from h2_gym.graph.node import Node
 from h2_gym.graph.spatial import SpaceGraph
+from pathlib import Path
+from .utils import (
+    get_ng_data
+)
 
 
 class ShippingEnv:
@@ -16,23 +20,33 @@ class ShippingEnv:
         self._generator = StochasticGenerator()
         self._space_graph = SpaceGraph()
         self._time_graph = Isochronous(self._space_graph,self._generator)
-        self._generator.bind_dataset(
-            dataset=self.get_data(
-            import_country,
-            demand_sf
-            )
-        )
+        self._import_country = import_country
+        self._demand_sf = demand_sf
+        
         pass
     
     def get_data(self):
+        """
+        Loads the environment's data.
+        """
+        current_path = Path(__file__).parent
+        data_path = current_path.parent.parent / "data/shipping"
+
+        
+
+        self._generator.bind_dataset(
+            dataset=get_ng_data(
+                data='natural_gas_demand.csv',
+                path=data_path / 'csv',
+                country=self._import_country,
+                unit='TJ'
+                ).data()['OBS_VALUE'].values * self.demand_sf / 730,
+                varname = 'demand',
+                time_duration=730
+        )
+
+
         pass
 
-    @staticmethod
-    def get_data(import_country, SF):
-        """
-        Gets the data from the json file
-        """
-        data = NGDemand('natural_gas_demand.csv', import_country, unit='TJ').data()
-        return data['OBS_VALUE'].values * SF
 
     
