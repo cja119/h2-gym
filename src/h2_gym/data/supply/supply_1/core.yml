@@ -19,6 +19,7 @@ uncertainties:
     name: renewable_power
     target_node: energy_production
     var_name: renewable_power
+    time_duration: 1
     domain: positive_real
     rng: [0, 13000]
     files:

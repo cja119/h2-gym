@@ -6,6 +6,7 @@ from __future__ import annotations
 from h2_gym.data.shipping import NGDemand
 from h2_gym.graph.temporal import StochasticGenerator, Isochronous
 from h2_gym.graph.node import Node
+from h2_gym.graph.spatial import SpaceGraph
 
 
 class ShippingEnv:
@@ -13,13 +14,17 @@ class ShippingEnv:
     def __init__(self, import_country, demand_sf: float = 0.025) -> None:
         
         self._generator = StochasticGenerator()
-        self._time_graph = Isochronous(Node(),self._generator)
+        self._space_graph = SpaceGraph()
+        self._time_graph = Isochronous(self._space_graph,self._generator)
         self._generator.bind_dataset(
             dataset=self.get_data(
             import_country,
             demand_sf
             )
         )
+        pass
+    
+    def get_data(self):
         pass
 
     @staticmethod

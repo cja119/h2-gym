@@ -6,7 +6,6 @@ from h2_gym.graph.spatial import SpaceGraph
 from h2_gym.graph.temporal import StochasticGenerator
 from h2_gym.graph.temporal import Isochronous
 from pathlib import Path
-from yaml import safe_load
 from .utils import (
     add_constants,
     add_equations,
@@ -60,12 +59,15 @@ class HydrogenSupply:
 
         for _, value in data['uncertainties'].items():
             self.generator.bind_dataset(
+                varname=value['var_name'],
                 path = current_path,
-                filenames = value['files']
+                filenames = value['files'],
+                time_duration = value['time_duration'],
                 )
             self.generator.bind_variable(
                 self.space_graph[value['target_node']],
-                value['var_name']
+                value['var_name'],
+                time_duration = value['time_duration']
                 )
 
         return None
