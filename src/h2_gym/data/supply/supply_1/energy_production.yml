@@ -1,0 +1,61 @@
+energy_production:
+  constants:
+    N_C_U: 12
+    eta_C_U: 0.05
+    eta_C_L: 0.1
+    P_C_U: 135
+    eta_C_S: 8.124
+    eta_C_P: 159000
+    eta_N_T: 1087
+  equations:
+    eq_1:
+      name: conversion_energy
+      target_node: energy_production+
+      var_name: old_conversion_power
+    eq_2:
+      name: hydrogen_energy
+      target_node: hydrogen_production
+      var_name: hydrogen_energy
+    eq_3:
+      name: conversion_energy
+      target_node: hydrogen_production
+      var_name: conversion_energy
+  constraints:
+    cons_1:
+      name: power_lim
+      target_node: energy_production
+      var_name: power_lim_feas
+    cons_2:
+      name: sup_lim
+      target_node: energy_production
+      var_name: sup_lim_feas
+    cons_3:
+      name: ramp_up
+      target_node: energy_production
+      var_name: ramp_up_feas
+    cons_4:
+      name: ramp_lo
+      target_node: energy_production
+      var_name: ramp_lo_feas
+  inlets:
+    inlet_1:
+      name: renewable_power
+      domain: positive_real
+      rng: [0, 13000]
+    inlet_2:
+      name: old_conversion_power
+      domain: positive_real
+      rng: [0, 1620]
+  controls:
+    var_1:
+      name: hydrogen_power
+      domain: positive_real
+      rng: [0, 10580]
+    var_2:
+      name: conversion_power
+      domain: positive_real
+      rng: [0, 1620]
+    var_3:
+      name: supplemental_power
+      domain: positive_real
+      rng: [0, 1620]

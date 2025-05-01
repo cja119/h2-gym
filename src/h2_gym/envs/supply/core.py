@@ -6,6 +6,7 @@ from h2_gym.graph.spatial import SpaceGraph
 from h2_gym.graph.temporal import StochasticGenerator
 from h2_gym.graph.temporal import Isochronous
 from pathlib import Path
+from yaml import safe_load
 from .utils import (
     add_constants,
     add_equations,

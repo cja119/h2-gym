@@ -1,0 +1,39 @@
+hydrogen_production:
+  constants:
+    eta_P_C: 5.55
+    eta_H2: 0.85
+    eta_F_C: 0.4
+    E_H2_U: 400
+    E_H2_L: 80
+    P_C_U: 135
+  equations:
+    eq_1:
+      name: hydrogen_storage
+      target_node: hydrogen_production+
+      var_name: old_hydrogen_storage
+    eq_2:
+      name: vector_production
+      target_node: hydrogen_conversion
+      var_name: vector_production
+  constraints:
+    cons_1:
+      name: h2_store_up
+      target_node: hydrogen_production
+      var_name: ramp_up_feas
+    cons_2:
+      name: h2_store_lo
+      target_node: hydrogen_production
+      var_name: h2_store_lo
+  inlets:
+    inlet_1:
+      name: hydrogen_energy
+      domain: positive_real
+      rng: [0, 10580]
+    inlet_2:
+      name: old_hydrogen_storage
+      domain: positive_real
+      rng: [9600, 48000]
+    inlet_3:
+      name: conversion_energy
+      domain: positive_real
+      rng: [0, 1620]

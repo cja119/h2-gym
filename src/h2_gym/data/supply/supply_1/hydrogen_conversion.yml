@@ -1,0 +1,48 @@
+hydrogen_conversion:
+    constants:
+      eta_P_C: 5.55
+      eta_F_C: 0.4
+      E_C_U: 3000000
+      E_C_L: 600000
+      P_C_U: 135
+    equations:
+      eq_1:
+        name: vector_output
+        target_node: shipping
+        var_name: vector_production
+      eq_2:
+        name: vector_storage
+        target_node: hydrogen_conversion+
+        var_name: old_vector_storage
+    constraints:
+      cons_1:
+        name: vec_store_up
+        target_node: hydrogen_conversion
+        var_name: vec_store_up_feas
+      cons_2:
+        name: vec_store_lo
+        target_node: hydrogen_conversion
+        var_name: vec_store_up_feas
+    inlets:
+      inlet_1:
+        name: vector_production
+        domain: positive_real
+        rng: [0, 10580]
+      inlet_2:
+        name: old_vector_storage
+        domain: positive_real
+        rng: [600000, 3000000]
+    controls:
+      var_1:
+        name: vector_power
+        domain: positive_real
+        rng: [0, 127500]
+outputs:
+  output_1:
+  name: vector_output
+  domain: positive_real
+  rng: [0, 10580]
+  output_2:
+  name: vector_storage
+  domain: positive_real
+  rng: [600000, 3000000]

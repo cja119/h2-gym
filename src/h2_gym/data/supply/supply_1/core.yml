@@ -1,0 +1,25 @@
+function_file: supply_1_funcs.py
+partial_order:
+  - energy_production
+  - hydrogen_production
+  - hydrogen_conversion
+  - shipping
+edges:
+  - [energy_production, hydrogen_production]
+  - [energy_production, energy_production+]
+  - [energy_production, hydrogen_conversion]
+  - [hydrogen_production, hydrogen_conversion]
+  - [hydrogen_production, hydrogen_production+]
+  - [hydrogen_conversion, hydrogen_conversion+]
+  - [hydrogen_conversion, shipping]
+  - [shipping, shipping+]
+  - [shipping, energy_production+]
+uncertainties:
+  uncertainty_1:
+    name: renewable_power
+    target_node: energy_production
+    var_name: renewable_power
+    domain: positive_real
+    rng: [0, 13000]
+    files:
+      - csv/*.csv
