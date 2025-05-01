@@ -20,5 +20,8 @@ dependencies = [
 
 [project.optional-dependencies]
 supply = ["gymnasium"]
-shipping = ["pyomo"]
+shipping = [
+    "h2-plan @ git+https://github.com/cja119/stochasticmodel.git@rebase",
+    "pycountry"
+]
 all = ["gymnasium","pyomo"]
