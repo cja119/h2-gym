@@ -1,0 +1,36 @@
+consumer:
+  constants:
+    storage_capacity:
+    
+
+  inlets:
+    inlet_1:
+      name: estimated_arrival_time
+      domain: positive_integer
+      rng: [0, 8760]
+    inlet_2:
+      name: old_storage
+      domain: positive_real
+      rng: [0, 48000] 
+    inlet_3:
+      name: ship_arrive
+      domain: positive_integer
+      rng: [0, 1] 
+
+  controls:
+    var_1:
+      name: ship_order
+      domain: positive_integer
+      rng: [0, 1]
+
+
+  equations:
+    eq_1:
+      name: storage_balance
+      target_node: consumer
+      var_name: old_storage
+      
+  constraints:
+    cons_1:
+      name: storage_limit
+

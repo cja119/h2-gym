@@ -15,13 +15,32 @@ dependencies = [
   "meteor_py  @ git+https://github.com/cja119/meteor_py.git",
   "numpy",
   "jax",
-  #"mu_F @ git+https://github.com/mawbray/mu.F.git"
+
 ]
 
 [project.optional-dependencies]
-supply = ["gymnasium"]
+supply = ["gymnasium",
+        #"mu_F @ git+https://github.com/mawbray/mu.F.git"
+        ]
 shipping = [
-    "h2-plan @ git+https://github.com/cja119/stochasticmodel.git@rebase",
-    "pycountry"
+    "h2-plan @ git+https://github.com/cja119/stochasticmodel.git",
+    "pycountry",
+    "certifi==2024.12.14",
+    "charset-normalizer==3.4.1",
+    "et_xmlfile==2.0.0",
+    "eurostat==1.1.1",
+    "idna==3.10",
+    "numpy>=1.26",
+    "openpyxl==3.1.5",
+    "pandas==2.2.3",
+    "python-dateutil==2.9.0.post0",
+    "pytz==2024.2",
+    "PyYAML==6.0.2",
+    "requests==2.32.3",
+    "six==1.17.0",
+    "tzdata==2024.2",
+    "urllib3==2.3.0",
+    "selenium",
+    "webdriver_manager"
 ]
 all = ["gymnasium","pyomo"]
