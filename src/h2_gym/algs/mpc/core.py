@@ -1,8 +1,8 @@
 """
-This model is of a supply planning problem. 
+
 """
 
-class SupplyPlanning:
+class MPC:
     """
     """
     def __init__(self) -> None:

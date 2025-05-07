@@ -41,6 +41,6 @@ shipping = [
     "tzdata==2024.2",
     "urllib3==2.3.0",
     "selenium",
-    "webdriver_manager"
+    "webdriver_manager",
 ]
 all = ["gymnasium","pyomo"]
