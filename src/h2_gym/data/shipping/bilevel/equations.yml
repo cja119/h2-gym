@@ -15,7 +15,9 @@ fast:
   cons4: "upper_vector_storage_limit"
   cons5: "lower_ramping_limit"
   cons6: "upper_ramping_limit"
-  cons7: "shipping_target_cons"
-  obj1: "hydrogen_production"
+  cons7: "ship_send_limit"
+  cons8: "ship_schedule_aux_lower"
+  cons9: "ship_schedule_aux_upper"
+  obj1: "hydrogen_production_maximisation"
   obj2: "shipping_target"
 
