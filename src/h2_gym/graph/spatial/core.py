@@ -46,7 +46,7 @@ class SpaceGraph:
         state = self._state
         if self._state >= len(self._nodes):
             self._state = 0
-            raise StopIteration  # 🛑 Termination condition
+            raise StopIteration  #  Termination condition
         self._state += 1
         keys = list(self._nodes.keys())
         return self[keys[state]]

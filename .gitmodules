@@ -1,3 +1,6 @@
 [submodule "src/h2_gym/data/shipping/ngdemand/demand"]
 	path = src/h2_gym/data/shipping/ngdemand/demand
 	url = https://github.com/benmcwilliams/gas-demand
+[submodule "src/h2_gym/algs/sampler/mu_F"]
+	path = src/h2_gym/algs/sampler/mu_F
+	url = https://github.com/mawbray/mu.F.git

@@ -3,7 +3,7 @@ This module contains the shipping environment which performs a bilevel
 """
 
 from __future__ import annotations
-from h2_gym.data.shipping import NGDemand
+from h2_gym.data.shipping.ngdemand import NGDemand
 from h2_gym.graph.temporal import StochasticGenerator, Isochronous
 from h2_gym.graph.node import Node
 from h2_gym.graph.spatial import SpaceGraph
