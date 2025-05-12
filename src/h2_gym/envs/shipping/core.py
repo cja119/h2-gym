@@ -7,6 +7,7 @@ from h2_gym.data.shipping.ngdemand import NGDemand
 from h2_gym.graph.temporal import StochasticGenerator, Isochronous
 from h2_gym.graph.node import Node
 from h2_gym.graph.spatial import SpaceGraph
+from h2_gym.algs.filter import KalmanFilter
 from pathlib import Path
 from .utils import (
     get_ng_data
@@ -15,20 +16,25 @@ from .utils import (
 
 class ShippingEnv:
 
-    def __init__(self, import_country, demand_sf: float = 0.025) -> None:
+    def __init__(self,file: str) -> None:
         
+        self._file = file
         self._generator = StochasticGenerator()
         self._space_graph = SpaceGraph()
         self._time_graph = Isochronous(self._space_graph,self._generator)
-        self._import_country = import_country
-        self._demand_sf = demand_sf
         
         pass
-    
+
     def get_data(self):
         """
         Loads the environment's data.
         """
+
+        current_path = Path(__file__).parent.parent.parent / "data/shipping"
+
+
+
+
         current_path = Path(__file__).parent
         data_path = current_path.parent.parent / "data/shipping"
 

@@ -20,11 +20,11 @@ class HydrogenSupply:
     Hydrogen export class
     """
 
-    def __init__(self,json_file) -> None:
+    def __init__(self,file: str) -> None:
         """
         Initializes the hydrogen export class
         """
-        self.file = json_file
+        self.file = file
         self.space_graph = SpaceGraph()
         self.generator = StochasticGenerator()
         self.graph = Isochronous(self.space_graph,self.generator)

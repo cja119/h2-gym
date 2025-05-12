@@ -1,4 +1,4 @@
-fast:
+Equations: 
   eqn1: "energy_balance"
   eqn2: "hydrogen_production"
   eqn3: "compression_balance"
@@ -9,6 +9,7 @@ fast:
   eqn8: "vector_production"
   eqn9: "vector_storage_balance"
   eqn10: "shipping_balance"
+Constriants:
   cons1: "lower_hydrogen_storage_limit"
   cons2: "upper_hydrogen_storage_limit"
   cons3: "lower_vector_storage_limit"
@@ -18,6 +19,7 @@ fast:
   cons7: "ship_send_limit"
   cons8: "ship_schedule_aux_lower"
   cons9: "ship_schedule_aux_upper"
+Objectives:
   obj1: "hydrogen_production_maximisation"
   obj2: "shipping_target"
 

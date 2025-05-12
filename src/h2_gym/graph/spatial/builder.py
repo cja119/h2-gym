@@ -5,7 +5,6 @@ This module contains the Graph class, which is used to represent a graphical str
 from __future__ import annotations
 from ..node import Node
 from typing import Union
-import jax.numpy as jnp
 
 class GraphBuilder:
     def __init__(self, graph):

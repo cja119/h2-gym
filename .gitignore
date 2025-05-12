@@ -12,3 +12,6 @@ build/*
 # Ignoring all .DS_Store files
 .DS_Store
 /**/.DS_Store
+
+/src/h2_gym/tmp/*
+!/src/h2_gym/tmp/.gitkeep

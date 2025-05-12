@@ -1,0 +1,14 @@
+Parameters:
+  electrolysis_efficiency: 0.85
+  
+
+Variables:
+  var1:
+    name: energy_curtailed
+    domain: positive_real
+    rng: [0, 13000]
+  var2:
+    name: energy_compression
+    domain: positive_real
+    rng: []
+

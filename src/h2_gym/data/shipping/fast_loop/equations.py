@@ -1,5 +1,6 @@
 """
-Equaitons for the bilevel shipping problem.
+Equaitons for the bilevel shipping problem. These are implemented in a format which can
+be solved by pyomo. 
 """
 from pyomo.environ import Constraint
 
