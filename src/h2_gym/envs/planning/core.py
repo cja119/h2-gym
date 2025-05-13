@@ -42,6 +42,17 @@ class Planning:
                         'geographical_storage': False,
                         'grid_wheel': False,
                     }
+        self._parameters.update({
+            'booleans': self._booleans,
+            'stage_duration': 168,
+            'n_stages': 3,
+            'n_stochastics': 3,
+            'hydrogen_price': 5, 
+            'random_seed': 42,
+            'relaxed_ramping': True,
+            'vector_operating_duration': 1,
+            'shipping_decision': 168
+        })
 
         return None
     
@@ -55,25 +66,13 @@ class Planning:
         """
         Enters the planning model context. 
         """
-        return self._booleans
+        return self._parameters
     
     def __exit__(self, exc_type, exc_value, traceback) -> None:
         """
         Exits the planning model context. 
         """
         
-        self._parameters.update({
-            'booleans': self._booleans,
-            'stage_duration': 168,
-            'n_stages': 3,
-            'n_stochastics': 3,
-            'hydrogen_price': 5, 
-            'random_seed': 42,
-            'relaxed_ramping': True,
-            'vector_operating_duration': 1,
-            'shipping_decision': 168
-        })
-
         filepath  = Path(__file__).parent.parent.parent / "tmp/planning"
 
         if not filepath.exists():
@@ -128,3 +127,7 @@ class Planning:
         self._res = PlanningResults(self._model).extract_results(target)
         
         return self._res
+    
+    def visualise(self):
+        self._model.generate_plots(self._model)
+        return None

@@ -9,6 +9,7 @@ from h2_gym.graph.node import Node
 from h2_gym.graph.spatial import SpaceGraph
 from h2_gym.algs.filter import KalmanFilter
 from pathlib import Path
+import yaml
 from .utils import (
     get_ng_data
 )
@@ -25,20 +26,16 @@ class ShippingEnv:
         
         pass
 
-    def get_data(self):
+    def get_data(self, planning_model: str):
         """
         Loads the environment's data.
         """
 
-        current_path = Path(__file__).parent.parent.parent / "data/shipping"
-
-
-
-
         current_path = Path(__file__).parent
+        planning_model_path = current_path.parent.parent/ "tmp/planning"/ planning_model
         data_path = current_path.parent.parent / "data/shipping"
 
-        
+        planning_results = yaml.safe_load(open(planning_model_path, 'r'))
 
         self._generator.bind_dataset(
             dataset=get_ng_data(
