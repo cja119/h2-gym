@@ -15,7 +15,7 @@ from .utils import (
 )
 
 
-class ShippingEnv:
+class ShippingEnvV1:
 
     def __init__(self,file: str) -> None:
         
