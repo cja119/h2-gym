@@ -1,4 +1,4 @@
-function_file: supply_1_funcs.py
+function_file: functions.py
 partial_order:
   - energy_production
   - hydrogen_production

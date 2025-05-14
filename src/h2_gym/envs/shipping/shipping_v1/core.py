@@ -1,5 +1,6 @@
 """
-This module contains the shipping environment which performs a bilevel
+This module contains the shipping environment which performs a bilevel model predictive
+control optimisation for the shipping problem.
 """
 
 from __future__ import annotations
@@ -11,7 +12,8 @@ from h2_gym.algs.filter import KalmanFilter
 from pathlib import Path
 import yaml
 from .utils import (
-    get_ng_data
+    optimisation_handover,
+    environment_handover
 )
 
 
@@ -20,36 +22,31 @@ class ShippingEnvV1:
     def __init__(self,file: str) -> None:
         
         self._file = file
-        self._generator = StochasticGenerator()
+        self._outer_generator = StochasticGenerator()
+        self._inner_generator = StochasticGenerator()
         self._space_graph = SpaceGraph()
-        self._time_graph = Isochronous(self._space_graph,self._generator)
+        self._time_graph = Isochronous(self._space_graph,self._outer_generator)
         
         pass
 
-    def get_data(self, planning_model: str):
+    
+    def step(self):
         """
-        Loads the environment's data.
+        Extracts data from the model, solves the inner loop and hands over the results to the outer loop.
         """
+        environment_handover(self._model)
 
-        current_path = Path(__file__).parent
-        planning_model_path = current_path.parent.parent/ "tmp/planning"/ planning_model
-        data_path = current_path.parent.parent / "data/shipping"
+        for i in range(n_inner):
+            res = self._inner_generator.update()
+            self._model.update(res)
+            out = self._model.solve()
 
-        planning_results = yaml.safe_load(open(planning_model_path, 'r'))
-
-        self._generator.bind_dataset(
-            dataset=get_ng_data(
-                data='natural_gas_demand.csv',
-                path=data_path / 'csv',
-                country=self._import_country,
-                unit='TJ'
-                ).data()['OBS_VALUE'].values * self.demand_sf / 730,
-                varname = 'demand',
-                time_duration=730
-        )
-
-
+        optimisation_handover(self._model)
         pass
+
+    
+
+        
 
 
     

@@ -1,0 +1,7 @@
+function_file: functions.py
+partial_order:
+  - slow_loop
+  - fast_loop
+edges:
+  - [slow_loop, fast_loop]
+  - [fast_loop, slow_loop+]
