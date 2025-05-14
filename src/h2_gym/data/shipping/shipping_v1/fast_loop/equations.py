@@ -236,7 +236,7 @@ def ship_schedule_aux_upper(m,_t):
         return Constraint.Skip
     cons = 0
     cons -= m.n_ship_aux[_t]
-    cons += (m.ship_schedule[t]- sum(m.n_ship_sent[t] for t in range(_t-24,_t)))
+    cons += (m.ship_schedule[_t]- sum(m.n_ship_sent[t] for t in range(_t-24,_t)))
     return cons <= 0
 
 

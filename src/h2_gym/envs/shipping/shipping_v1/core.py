@@ -36,12 +36,13 @@ class ShippingEnvV1:
         """
         environment_handover(self._model)
 
-        for i in range(n_inner):
-            res = self._inner_generator.update()
-            self._model.update(res)
-            out = self._model.solve()
-
+        self._inner_loop.update(self._model)
+        self._inner_loop.solve()
+        self._inner_loop.get_results()
+        
         optimisation_handover(self._model)
+
+        
         pass
 
     
