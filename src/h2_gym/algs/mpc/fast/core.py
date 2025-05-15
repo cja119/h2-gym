@@ -9,35 +9,30 @@ from h2_plan.data import DefaultParams
 from h2_gym.envs import Planning
 
 
-class FastLoop:
+class FastController:
     """ """
 
-    def __init__(self, name, weather_file, n_inner: int = 1):
-        self._plan = Planning(name, weather_file)
-        self._model = ConcreteModel()
-        self._model
+    def __init__(self, model):
+
         pass
 
-    def update(self, data):
+    def build(self):
         """
-        Updates the inner loop with the new data.
+        This function builds the MPC problem
         """
         pass
-
-    def plan(self):
-        """
-        Plans the inner loop.
-        """
-        return
 
     def solve(self):
         """
-        Solves the inner loop.
+        This function solves the MPC problem
         """
         pass
 
-    def get_results(self):
-        """
-        Returns the results of the inner loop.
+    def input(self):
+        """ """
+        pass
+
+    def output(self):
+        """ 
         """
         pass

@@ -49,7 +49,7 @@ class KalmanFilter:
         if path is None:
             path = (
                 Path(__file__).parent.parent.parent
-                / f"data/shipping/demand/src/data/analyzed/{period}_demand_clean.csv"
+                / f"data/shipping/ngdemand/demand/src/data/analyzed/{period}_demand_clean.csv"
             )
 
         data = read_csv(path)

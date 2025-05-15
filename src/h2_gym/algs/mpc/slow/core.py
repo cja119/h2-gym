@@ -27,5 +27,6 @@ class SlowController:
         pass
 
     def output(self):
-        """ """
+        """ 
+        """
         pass

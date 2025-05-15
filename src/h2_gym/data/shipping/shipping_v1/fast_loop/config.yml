@@ -15,17 +15,19 @@ param_source:
     - renewable_energy_capacity
 
   default_data:
-    - electrolysis_efficiency: ["efficiencies", "electrolysers", "SOFC"]
-    - electrolysis_compression_penalty: ["miscillaneous", "electrolyser_compression_energy", "SOFC"]
-    - production_compression_penalty: ["miscillaneous", "vector_compression_penalty"]
-    - storage_compression_penalty: ["miscillaneous", "storage_compression_penalty"]
-    - compression_efficiency: ["efficiencies", "compressor"]
-    - fuelcell_efficiency: ["efficiencies", "fuel_cell"]
-    - variable_energy_penalty_conversion: ["vector_production", "variable_energy_penalty"]
-    - calorific_value: ["efficiencies", "vector_calorific_value"]
-    - fixed_energy_penalty_conversion: ["vector_production", "fixed_energy_penalty"]
-    - single_train_limit_conversion: ["vector_production", "single_train_throughput"]
-    - conversion_fugitive_efficiency: ["efficiencies", "vector_fugitive"]
-    - ship_capacity: ["shipping", "storage_capacity"]
-    - ramp_down_limit: ["vector_production", "ramp_down_limit"]
-    - ramp_up_limit: ["vector_production", "ramp_up_limit"]
+    electrolysis_efficiency: ["efficiencies", "electrolysers", "SOFC"]
+    electrolysis_compression_penalty: ["miscillaneous", "electrolyser_compression_energy", "SOFC"]
+    production_compression_penalty: ["miscillaneous", "vector_compression_penalty"]
+    storage_compression_penalty: ["miscillaneous", "storage_compression_penalty"]
+    compression_efficiency: ["efficiencies", "compressor"]
+    fuelcell_efficiency: ["efficiencies", "fuel_cell"]
+    variable_energy_penalty_conversion: ["vector_production", "variable_energy_penalty"]
+    calorific_value: ["efficiencies", "vector_calorific_value"]
+    fixed_energy_penalty_conversion: ["vector_production", "fixed_energy_penalty"]
+    single_train_limit_conversion: ["vector_production", "single_train_throughput"]
+    conversion_fugitive_efficiency: ["efficiencies", "vector_fugitive"]
+    ship_capacity: ["shipping", "storage_capacity"]
+    ramp_down_limit: ["vector_production", "ramp_down_limit"]
+    ramp_up_limit: ["vector_production", "ramp_up_limit"]
+
+  

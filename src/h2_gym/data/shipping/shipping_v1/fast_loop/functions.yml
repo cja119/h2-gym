@@ -1,25 +1,67 @@
-Equations: 
-  eqn1: "energy_balance"
-  eqn2: "hydrogen_production"
-  eqn3: "compression_balance"
-  eqn4: "influent_hydrogen_balance"
-  eqn5: "efluent_hydrogen_balance"
-  eqn6: "fuel_cell_production"
-  eqn7: "hydrogen_storage_balance"
-  eqn8: "vector_production"
-  eqn9: "vector_storage_balance"
-  eqn10: "shipping_balance"
-Constriants:
-  cons1: "lower_hydrogen_storage_limit"
-  cons2: "upper_hydrogen_storage_limit"
-  cons3: "lower_vector_storage_limit"
-  cons4: "upper_vector_storage_limit"
-  cons5: "lower_ramping_limit"
-  cons6: "upper_ramping_limit"
-  cons7: "ship_send_limit"
-  cons8: "ship_schedule_aux_lower"
-  cons9: "ship_schedule_aux_upper"
-Objectives:
-  obj1: "hydrogen_production_maximisation"
-  obj2: "shipping_target"
-
+equations: 
+  eqn1:
+    name: "energy_balance"
+    domain: ["grid0"]
+  eqn2:
+    name: "hydrogen_production"
+    domain: ["grid0"]
+  eqn3:
+    name: "compression_balance"
+    domain: ["grid0"]
+  eqn4:
+    name: "influent_hydrogen_balance"
+    domain: ["grid0"]
+  eqn5:
+    name: "effluent_hydrogen_balance"
+    domain: ["grid0"]
+  eqn6:
+    name: "fuel_cell_production"
+    domain: ["grid0"]
+  eqn7:
+    name: "hydrogen_storage_balance"
+    domain: ["grid0"]
+  eqn8:
+    name: "vector_production"
+    domain: ["grid0"]
+  eqn9:
+    name: "vector_storage_balance"
+    domain: ["grid0"]
+  eqn10:
+    name: "shipping_balance"
+    domain: ["grid0"]
+constraints:
+  cons1:
+    name: "lower_hydrogen_storage_limit"
+    domain: ["grid0"]
+  cons2:
+    name: "upper_hydrogen_storage_limit"
+    domain: ["grid0"]
+  cons3:
+    name: "lower_vector_storage_limit"
+    domain: ["grid0"]
+  cons4:
+    name: "upper_vector_storage_limit"
+    domain: ["grid0"]
+  cons5:
+    name: "lower_vector_ramping_limit"
+    domain: ["grid0"]
+  cons6:
+    name: "upper_vector_ramping_limit"
+    domain: ["grid0"]
+  cons7:
+    name: "ship_send_limit"
+    domain: ["grid0"]
+  cons8:
+    name: "ship_schedule_aux_lower"
+    domain: ["grid1"]
+  cons9:
+    name: "ship_schedule_aux_upper"
+    domain: ["grid1"]
+objectives:
+  obj1: 
+    name: "hydrogen_production_maximisation"
+    sense: "max"
+  obj2:
+    name: "shipping_target"
+    sense: "min"
+  

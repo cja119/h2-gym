@@ -252,14 +252,17 @@ def ship_send_limit(m, t):
     return cons <= 0
 
 
-def ship_schedule_aux_lower(m, t):
+def ship_schedule_aux_lower(m, _t):
     """
     Ship schedule auxiliary equation for the lower production problem.
     """
-    cons = 0
-    cons -= m.n_ship_aux[t]
-    cons += m.n_ship_sent[t] - m.ship_schedule[t]
-    return cons <= 0
+    if _t == 0:
+        return Constraint.Skip
+    else:
+        cons = 0
+        cons += m.n_ship_aux[_t]
+        cons -= (m.ship_schedule[_t] - sum(m.n_ship_sent[t] for t in range(_t - 24, _t)))
+        return cons <= 0
 
 
 def ship_schedule_aux_upper(m, _t):
@@ -268,10 +271,11 @@ def ship_schedule_aux_upper(m, _t):
     """
     if _t == 0:
         return Constraint.Skip
-    cons = 0
-    cons -= m.n_ship_aux[_t]
-    cons += m.ship_schedule[_t] - sum(m.n_ship_sent[t] for t in range(_t - 24, _t))
-    return cons <= 0
+    else:
+        cons = 0
+        cons -= m.n_ship_aux[_t]
+        cons += (m.ship_schedule[_t] - sum(m.n_ship_sent[t] for t in range(_t - 24, _t)))
+        return cons <= 0
 
 
 def hydrogen_production_maximisation(m):
