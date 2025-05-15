@@ -6,6 +6,7 @@ from __future__ import annotations
 from ..node import Node
 from typing import Union
 
+
 class GraphBuilder:
     def __init__(self, graph):
         """
@@ -18,40 +19,33 @@ class GraphBuilder:
         Enters the graph context
         """
         return self
-    
+
     def __exit__(self, exc_type, exc_value, traceback) -> None:
         """
         Exits the graph context
         """
         self.build()
         return None
-    
+
     def __setitem__(self, key: Union[str, int], value: Node) -> None:
         """
         Embeds a node in the graph
         """
 
-        if key == 'nodes':
+        if key == "nodes":
             for node in value:
                 self.graph.add_node(node)
-        elif key == 'edges':
+        elif key == "edges":
             for edge in value:
                 self.graph.add_edge(*edge)
         else:
-            setattr(self.graph, '_'+key, value)
-        
-        return None        
+            setattr(self.graph, "_" + key, value)
+
+        return None
 
     def build(self) -> None:
         """
         Builds the graph
-        """ 
+        """
 
         return None
-                
-            
-            
-
-
-
-    

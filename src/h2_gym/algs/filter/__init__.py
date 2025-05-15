@@ -1,3 +1,3 @@
 from .core import KalmanFilter
 
-__all__ = ['KalmanFilter']
+__all__ = ["KalmanFilter"]

@@ -17,8 +17,6 @@ Exogenous:
     time_duration: 24
     rng: [0, 1]
 
-
-
 Variables:
   var1:
     name: energy_curtailed

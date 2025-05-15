@@ -1,6 +1,5 @@
-"""
+""" """
 
-"""
 from .isochronous import Isochronous
 from .stochastic_generator import StochasticGenerator
 

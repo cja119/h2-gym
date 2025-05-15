@@ -2,13 +2,11 @@
 This class implements the slow controlelr in the MPC algorithm
 """
 
+
 class SlowController:
-    """
-    
-    """
+    """ """
 
     def __init__(self, model):
-    
 
         pass
 
@@ -23,16 +21,11 @@ class SlowController:
         This function solves the MPC problem
         """
         pass
-    
+
     def input(self):
-        """
-        
-        """
+        """ """
         pass
 
     def output(self):
-        """
-        
-        """
+        """ """
         pass
-    

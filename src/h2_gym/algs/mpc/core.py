@@ -1,10 +1,9 @@
-"""
+""" """
 
-"""
 
 class MPC:
-    """
-    """
+    """ """
+
     def __init__(self) -> None:
         pass
 
@@ -13,8 +12,3 @@ class MPC:
         Loads the supply planning problem from a json file.
         """
         pass
-    
-
-    
-
-        

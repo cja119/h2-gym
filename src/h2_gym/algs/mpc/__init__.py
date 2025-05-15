@@ -1,3 +1,3 @@
 from .core import MPC
 
-__all__ = ['MPC']
+__all__ = ["MPC"]

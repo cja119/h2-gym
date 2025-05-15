@@ -1,6 +1,5 @@
-"""
+""" """
 
-"""
 from __future__ import annotations
 from h2_gym.graph.spatial import SpaceGraph
 from h2_gym.graph.temporal import StochasticGenerator
@@ -12,23 +11,24 @@ from .utils import (
     add_constraints,
     add_inlets,
     add_controls,
-    module_loader
+    module_loader,
 )
+
 
 class HydrogenSupply:
     """
     Hydrogen export class
     """
 
-    def __init__(self,file: str) -> None:
+    def __init__(self, file: str) -> None:
         """
         Initializes the hydrogen export class
         """
         self.file = file
         self.space_graph = SpaceGraph()
         self.generator = StochasticGenerator()
-        self.graph = Isochronous(self.space_graph,self.generator)
-        
+        self.graph = Isochronous(self.space_graph, self.generator)
+
         self.get_data()
 
         return None
@@ -37,18 +37,17 @@ class HydrogenSupply:
         """
         Gets the data from the json file
         """
-        current_path = Path(__file__).parent.parent.parent/"data/supply"
+        current_path = Path(__file__).parent.parent.parent / "data/supply"
 
         data, module = module_loader(current_path, self.file)
-        
+
         # The constraints map to themselves
-        self_edges = list(zip(data['partial_order'],data['partial_order']))
+        self_edges = list(zip(data["partial_order"], data["partial_order"]))
 
         with self.space_graph.builder() as gb:
-            gb['nodes'] = data['partial_order']
-            gb['edges'] = data['edges'] + self_edges
-            gb['directed'] = True
-
+            gb["nodes"] = data["partial_order"]
+            gb["edges"] = data["edges"] + self_edges
+            gb["directed"] = True
 
         for node in self.space_graph:
             add_constants(node, data)
@@ -57,17 +56,17 @@ class HydrogenSupply:
             add_inlets(node, data)
             add_controls(node, data)
 
-        for _, value in data['uncertainties'].items():
+        for _, value in data["uncertainties"].items():
             self.generator.bind_dataset(
-                varname=value['var_name'],
-                path = current_path,
-                filenames = value['files'],
-                time_duration = value['time_duration'],
-                )
+                varname=value["var_name"],
+                path=current_path,
+                filenames=value["files"],
+                time_duration=value["time_duration"],
+            )
             self.generator.bind_variable(
-                self.space_graph[value['target_node']],
-                value['var_name'],
-                time_duration = value['time_duration']
-                )
+                self.space_graph[value["target_node"]],
+                value["var_name"],
+                time_duration=value["time_duration"],
+            )
 
         return None
