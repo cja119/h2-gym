@@ -137,7 +137,7 @@ def vector_storage_balance(m, t):
     """
     eqn = 0
     if t == 0:
-        eqn += m.vector_stored[t] 
+        eqn += m.vector_stored[t]
         eqn -= m.initial_vector_storage
     else:
         eqn += m.vector_stored[t] - m.vector_stored[t - 1]
@@ -145,7 +145,7 @@ def vector_storage_balance(m, t):
         m -= m.ship_charge_rate[t]
 
     return eqn == 0
-    
+
 
 def shipping_balance(m, t):
     """
@@ -273,8 +273,9 @@ def ship_schedule_aux_lower(m, _t):
     else:
         cons = 0
         cons += m.n_ship_aux[_t]
-        cons -= (m.ship_schedule[_t] - sum(m.n_ship_sent[t] for t in range(_t - 24, _t)))
+        cons -= m.ship_schedule[_t] - sum(m.n_ship_sent[t] for t in range(_t - 24, _t))
         return cons <= 0
+
 
 def ship_schedule_aux_upper(m, _t):
     """
@@ -285,31 +286,32 @@ def ship_schedule_aux_upper(m, _t):
     else:
         cons = 0
         cons -= m.n_ship_aux[_t]
-        cons += (m.ship_schedule[_t] - sum(m.n_ship_sent[t] for t in range(_t - 24, _t)))
+        cons += m.ship_schedule[_t] - sum(m.n_ship_sent[t] for t in range(_t - 24, _t))
         return cons <= 0
 
 
-def ship_arrival(m,t):
+def ship_arrival(m, t):
     """
     Ship arrival balance equation for the lower production problem.
     """
     cons = 0
     cons += m.ship_charge_rate[t]
-    
+
     if t <= m.ship_arrival_time:
-        if m.ship_arrived > 0 and sum(m.n_ship_sent[_t] for _t in range(t)) < m.ship_arrived:
+        if (
+            m.ship_arrived > 0
+            and sum(m.n_ship_sent[_t] for _t in range(t)) < m.ship_arrived
+        ):
             cons -= m.ship_charge_limit * m.ship_arrived
     else:
         cons += m.ship_charge_limit * sum(
             m.n_ship_ordered[_t] for _t in range(0, t - m.ship_arrival_time)
-            )
-        cons -= m.ship_charge_limit * sum(
-            m.n_ship_sent[_t] for _t in range(t)
-            )
+        )
+        cons -= m.ship_charge_limit * sum(m.n_ship_sent[_t] for _t in range(t))
 
     return cons <= 0
-        
-        
+
+
 def ship_schedule_target(m, _t):
     """
     Ship schedule target equation for the lower production problem.
@@ -319,6 +321,7 @@ def ship_schedule_target(m, _t):
     cons -= m.n_ship_aux[_t]
 
     return cons <= 0
+
 
 def hydrogen_production_maximisation(m):
     """

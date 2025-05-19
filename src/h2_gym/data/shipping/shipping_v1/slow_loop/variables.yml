@@ -1,6 +1,3 @@
-Parameters:
-  electrolysis_efficiency: 0.85
-
 Exogenous:
   - name: hydrogen_price
     domain: positive_real
