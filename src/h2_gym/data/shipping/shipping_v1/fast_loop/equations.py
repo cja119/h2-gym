@@ -97,9 +97,12 @@ def hydrogen_storage_balance(m, t):
     Hydrogen storage balance equation for the lower production problem.
     """
     eqn = 0
-
-    eqn += m.hydrogen_stored[t]
-    eqn -= m.hydrogen_stored[t - 1]
+    if t == 0:
+        eqn += m.hydrogen_stored[t]
+        eqn -= m.initial_hydrogen_storage
+    else:
+        eqn += m.hydrogen_stored[t]
+        eqn -= m.hydrogen_stored[t - 1]
 
     return eqn == 0
 
@@ -133,13 +136,16 @@ def vector_storage_balance(m, t):
     Vector storage balance equation for the lower production problem.
     """
     eqn = 0
-
-    eqn += m.vector_stored[t] - m.vector_stored[t - 1]
-    eqn += m.vector_flux[t] * m.conversion_fugitive_efficiency
-    m -= m.ship_charge_rate[t]
+    if t == 0:
+        eqn += m.vector_stored[t] 
+        eqn -= m.initial_vector_storage
+    else:
+        eqn += m.vector_stored[t] - m.vector_stored[t - 1]
+        eqn += m.vector_flux[t] * m.conversion_fugitive_efficiency
+        m -= m.ship_charge_rate[t]
 
     return eqn == 0
-
+    
 
 def shipping_balance(m, t):
     """
@@ -148,8 +154,12 @@ def shipping_balance(m, t):
     eqn = 0
 
     eqn += m.cumulative_charge[t]
-    eqn -= sum(m.ship_charge_rate[_t] for _t in range(t))
-    eqn += sum(m.n_ship_sent[t] * m.ship_capacity for _t in range(t))
+
+    if t == 0:
+        eqn -= m.initial_cumulative_charge
+    else:
+        eqn -= sum(m.ship_charge_rate[_t] for _t in range(t))
+        eqn += sum(m.n_ship_sent[_t] * m.ship_capacity for _t in range(t))
 
     return eqn == 0
 
@@ -207,16 +217,17 @@ def lower_vector_ramping_limit(m, t):
     Lower vector ramping limit equation for the lower production problem.
     """
     if t == 0:
-        return Constraint.Skip
-
-    cons += m.energy_conversion[t - 1]
-    cons -= m.energy_conversion[t]
-    cons /= m.calorific_value
-    cons -= (
-        m.n_active_trains_conversion[t]
-        * m.single_train_limit_conversion
-        * m.ramp_down_limit
-    )
+        cons += m.energy_conversion[t]
+        cons -= m.initial_conversion_process_state
+    else:
+        cons += m.energy_conversion[t - 1]
+        cons -= m.energy_conversion[t]
+        cons /= m.calorific_value
+        cons -= (
+            m.n_active_trains_conversion[t]
+            * m.single_train_limit_conversion
+            * m.ramp_down_limit
+        )
 
     return cons <= 0
 
@@ -226,16 +237,17 @@ def upper_vector_ramping_limit(m, t):
     Upper vector ramping limit equation for the lower production problem.
     """
     if t == 0:
-        return Constraint.Skip
-
-    cons += m.energy_conversion[t]
-    cons -= m.energy_conversion[t - 1]
-    cons /= m.calorific_value
-    cons -= (
-        (m.n_train_conversion - m.n_active_trains_conversion[t])
-        * m.single_train_limit_conversion
-        * m.ramp_up_limit
-    )
+        cons -= m.energy_conversion[t]
+        cons += m.conversion_process_state
+    else:
+        cons += m.energy_conversion[t]
+        cons -= m.energy_conversion[t - 1]
+        cons /= m.calorific_value
+        cons -= (
+            (m.n_train_conversion - m.n_active_trains_conversion[t])
+            * m.single_train_limit_conversion
+            * m.ramp_up_limit
+        )
 
     return cons <= 0
 
@@ -264,7 +276,6 @@ def ship_schedule_aux_lower(m, _t):
         cons -= (m.ship_schedule[_t] - sum(m.n_ship_sent[t] for t in range(_t - 24, _t)))
         return cons <= 0
 
-
 def ship_schedule_aux_upper(m, _t):
     """
     Ship schedule auxiliary equation for the lower production problem.
@@ -277,6 +288,37 @@ def ship_schedule_aux_upper(m, _t):
         cons += (m.ship_schedule[_t] - sum(m.n_ship_sent[t] for t in range(_t - 24, _t)))
         return cons <= 0
 
+
+def ship_arrival(m,t):
+    """
+    Ship arrival balance equation for the lower production problem.
+    """
+    cons = 0
+    cons += m.ship_charge_rate[t]
+    
+    if t <= m.ship_arrival_time:
+        if m.ship_arrived > 0 and sum(m.n_ship_sent[_t] for _t in range(t)) < m.ship_arrived:
+            cons -= m.ship_charge_limit * m.ship_arrived
+    else:
+        cons += m.ship_charge_limit * sum(
+            m.n_ship_ordered[_t] for _t in range(0, t - m.ship_arrival_time)
+            )
+        cons -= m.ship_charge_limit * sum(
+            m.n_ship_sent[_t] for _t in range(t)
+            )
+
+    return cons <= 0
+        
+        
+def ship_schedule_target(m, _t):
+    """
+    Ship schedule target equation for the lower production problem.
+    """
+    cons = 0
+
+    cons -= m.n_ship_aux[_t]
+
+    return cons <= 0
 
 def hydrogen_production_maximisation(m):
     """

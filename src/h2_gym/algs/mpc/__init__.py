@@ -1,3 +1,7 @@
-from .core import MPC
+from .fast import FastController
+from .slow import SlowController
 
-__all__ = ["MPC"]
+__all__ = [
+    "FastController",
+    "SlowController",
+]

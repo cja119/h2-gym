@@ -1,6 +1,11 @@
 """
-This class implements the slow controlelr in the MPC algorithm
+This defines the inner loop of the model predictive control (MPC) algorithm.
 """
+
+from __future__ import annotations
+from pyomo.environ import ConcreteModel, Var, Constraint
+from h2_plan.data import DefaultParams
+from h2_gym.envs import Planning
 
 
 class SlowController:

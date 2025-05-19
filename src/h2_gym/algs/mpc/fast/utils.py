@@ -2,8 +2,8 @@
 Utils file for the inner loop of the model predictive control (MPC) algorithm.
 """
 
-import yml
-from Pathlib import Path
+import yaml
+from pathlib import Path
 
 
 def add_equations(model, environment_name: str) -> None:

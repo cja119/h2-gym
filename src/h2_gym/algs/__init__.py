@@ -1,4 +1,5 @@
 from .filter import KalmanFilter
-from .mpc import MPC
+from .mpc import FastController, SlowController
 
-__all__ = ["KalmanFilter", "MPC"]
+
+__all__ = ["KalmanFilter", "FastController", "SlowController"]

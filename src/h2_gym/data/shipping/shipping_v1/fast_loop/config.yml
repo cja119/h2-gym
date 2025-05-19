@@ -29,5 +29,52 @@ param_source:
     ship_capacity: ["shipping", "storage_capacity"]
     ramp_down_limit: ["vector_production", "ramp_down_limit"]
     ramp_up_limit: ["vector_production", "ramp_up_limit"]
+    ship_charge_limit: ["shipping", "loading_time"]
 
-  
+formulations:
+  primary: [
+    "energy_balance",
+    "hydrogen_production",
+    "compression_balance",
+    "influent_hydrogen_balance",
+    "effluent_hydrogen_balance",
+    "fuel_cell_production",
+    "hydrogen_storage_balance",
+    "vector_production",
+    "vector_storage_balance",
+    "shipping_balance",
+    "lower_hydrogen_storage_limit",
+    "upper_hydrogen_storage_limit",
+    "lower_vector_storage_limit",
+    "upper_vector_storage_limit",
+    "lower_vector_ramping_limit",
+    "upper_vector_ramping_limit",
+    "ship_send_limit",
+    "ship_schedule_aux_upper",
+    "ship_arrival",
+    "ship_schedule_target",
+    "hydrogen_production_maximisation"
+    ]
+  secondary: [
+    "energy_balance",
+    "hydrogen_production",
+    "compression_balance",
+    "influent_hydrogen_balance",
+    "effluent_hydrogen_balance",
+    "fuel_cell_production",
+    "hydrogen_storage_balance",
+    "vector_production",
+    "vector_storage_balance",
+    "shipping_balance",
+    "lower_hydrogen_storage_limit",
+    "upper_hydrogen_storage_limit",
+    "lower_vector_storage_limit",
+    "upper_vector_storage_limit",
+    "lower_vector_ramping_limit",
+    "upper_vector_ramping_limit",
+    "ship_send_limit",
+    "ship_schedule_aux_lower",
+    "ship_schedule_aux_upper",
+    "ship_arrival",
+    "shipping_target"
+    ]

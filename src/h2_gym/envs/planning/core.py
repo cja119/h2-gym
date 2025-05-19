@@ -1,6 +1,6 @@
 """
 This isn't really an environment: This class will interact with the planning model (fond at github.com/cja119/stochasticmodel)
-and solve the model to perform the planning operatinos for the hydrogen production region.
+and solve the model to perform the planning operationsß for the hydrogen production region.
 """
 
 from __future__ import annotations

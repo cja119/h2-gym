@@ -57,6 +57,12 @@ constraints:
   cons9:
     name: "ship_schedule_aux_upper"
     domain: ["grid1"]
+  cons10:
+    name: "ship_arrival"
+    domain: ["grid0"]
+  cons11:
+    name: "ship_schedule_target"
+    domain: ["grid1"]
 objectives:
   obj1: 
     name: "hydrogen_production_maximisation"
@@ -64,4 +70,3 @@ objectives:
   obj2:
     name: "shipping_target"
     sense: "min"
-  

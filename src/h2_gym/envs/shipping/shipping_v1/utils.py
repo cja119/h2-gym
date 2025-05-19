@@ -6,8 +6,19 @@ from typing import Optional
 from pathlib import Path
 import importlib.util
 from h2_plan.data import DefaultParams
-from pyomo.environ import Param, Set, Constraint, Objective, maximize, minimize
+from pyomo.environ import (
+    Param,
+    Set,
+    Constraint,
+    Objective,
+    maximize,
+    minimize,
+    Var,
+    NonNegativeIntegers,
+    NonNegativeReals,
+)
 from numpy.random import rand
+from random import randint
 from glob import glob
 import yaml
 
@@ -35,6 +46,8 @@ def import_fast_data(
 
     sets = {}
     params = {}
+    vars = {}
+    forms = {}
 
     config_file = (
         Path(__file__).parent.parent.parent.parent
@@ -45,6 +58,13 @@ def import_fast_data(
     )
     planning_model = (
         Path(__file__).parent.parent.parent.parent / "tmp/planning" / planning_model
+    )
+    variable_file = (
+        Path(__file__).parent.parent.parent.parent
+        / "data/shipping"
+        / data_folder
+        / "fast_loop"
+        / "variables.yml"
     )
 
     default_parameters = DefaultParams("default")
@@ -61,6 +81,9 @@ def import_fast_data(
 
     with open(config_file, "r") as f:
         config = yaml.safe_load(f)
+
+    with open(variable_file, "r") as f:
+        variables = yaml.safe_load(f)
 
     for key, item in config["Time"].items():
         if key != "total_duration":
@@ -92,7 +115,23 @@ def import_fast_data(
         for key, value in data.items():
             params[key] = Param(initialize=param, mutable=False)
 
-    return {"sets": sets, "params": params}
+    for _, value in variables["variables"].items():
+        vars[value["name"]] = Var(
+            *[sets[_key] for _key in value["time_duration"]],
+            within=(
+                NonNegativeReals
+                if value["time_duration"] == "positive_real"
+                else NonNegativeIntegers
+            ),
+        )
+    
+    for key, param in variables["parameters"].items():
+        params[key] = Param(initialize=param, mutable=False)
+        
+    for key, value in variables["formulations"].items():
+        forms[key] = value 
+
+    return {"sets": sets, "params": params, "vars": vars, "forms": forms}
 
 
 def import_fast_functions(data_folder: str, sets: dict) -> dict:
@@ -163,25 +202,51 @@ def import_fast_functions(data_folder: str, sets: dict) -> dict:
             raise ValueError(f"Function {key} not found in objectives file.")
     return funcs
 
+
 def args_dict():
     args = {
-            'vector': None,
-            'fast':{
-                "data_folder": None,
-                "planning_model": None,
-                "random_param": False,
-                "horizon": 28
-            },
-            'slow':{
-            },
-            'demand_prediction':{
-                "country": "EU",
-                "frequency": "monthly",
-                "sector": "industry",
-                "scale": 24.3,
-            },
-            'weather_data':{
-                'weather_file': None
-            }
-        }
+        "vector": None,
+        "fast": {
+            "data_folder": None,
+            "planning_model": None,
+            "random_param": False,
+            "horizon": 28,
+        },
+        "slow": {},
+        "demand_prediction": {
+            "country": "EU",
+            "frequency": "monthly",
+            "sector": "industry",
+            "scale": 24.3,
+        },
+        "weather_data": {"weather_file": None},
+        "shipping": {
+            "mean_transit_time": 840,
+            "std_transit_time": 48,
+            "mean_ship_arrival_time": 168,
+            "std_ship_arrival_time": 34,
+        },
+    }
     return args
+
+
+def temporal_align(weather, kalman_filter, randomise: Optional[bool] = False):
+    """
+    This function temporally aligns the weather data with the demand data.
+    and optionaly starts at a random opint in the dataseries.
+    """
+    if randomise:
+        random_start = randint(0, len(weather) - 1)
+    else:
+        random_start = 0
+
+    weather_data = weather[random_start:] + weather[:random_start]
+    month = (random_start % 8760) // 730
+    filter_month = kalman_filter._predict(1).index[0].month
+
+    diff = month - filter_month if month > filter_month else month - filter_month + 12
+
+    for _ in range(diff):
+        kalman_filter._update()
+
+    return kalman_filter, weather_data

@@ -215,7 +215,7 @@ class KalmanFilter:
 
         return pred_df
 
-    def update(self) -> None:
+    def update(self) -> float:
         """
         Updates the Kalman filter with the next data point.
         """
@@ -227,6 +227,8 @@ class KalmanFilter:
             self.check_test()
             self._seen_data += 1
             self._synth = True
+
+        return self._train_data.iloc[-1]
 
     def check_test(self) -> None:
         """
