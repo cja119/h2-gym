@@ -32,7 +32,7 @@ variables:
     domain: positive_real
     time_duration: [grid0]
   var8:
-    name: hydrogen_consumption
+    name: hydrogen_consumed_fuelcell
     domain: positive_real
     time_duration: [grid0]
   var9:
@@ -71,12 +71,15 @@ variables:
     name: n_ship_aux
     domain: positive_integer
     time_duration: [grid1]
-
-
-
-
-
-
-
-
-
+  var18:
+    name: vector_stored
+    domain: positive_real
+    time_duration: [grid0]
+  var19:
+    name: energy_conversion
+    domain: positive_real
+    time_duration: [grid0]
+  var20:
+    name: n_ship_ordered
+    domain: positive_integer
+    time_duration: [grid0]

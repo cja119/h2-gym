@@ -111,8 +111,9 @@ def import_fast_data(
         with open(planning_model, "r") as f:
             data = yaml.safe_load(f)
 
-        for key, value in data.items():
-            params[key] = param
+        if item in data:
+            params[item] = data[item]
+        
 
     for _, value in variables["variables"].items():
         vars[value["name"]] = {

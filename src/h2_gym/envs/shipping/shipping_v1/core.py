@@ -87,11 +87,11 @@ class ShippingEnvV1:
 
         latent_states = {
             "current_ships": 0,
-            "hydrogen_storage": 0.5
+            "hydrogen_stored": 0.5 
             * self._fast_data["params"]["hydrogen_storage_capacity"],
-            "vector_storage": 0.5
+            "vector_stored": 0.5
             * self._fast_data["params"]["vector_storage_capacity"],
-            "conversion_process_state": (
+            "energy_conversion": (
                 0.5
                 * self._fast_data["params"]["conversion_trains_number"]
                 * self._fast_data["params"]["variable_energy_penalty_conversion"]
@@ -142,21 +142,22 @@ class ShippingEnvV1:
         n_steps = demand_forecast.index[0].days_in_month
         projection = demand_forecast["predicted_mean"].values
         observation["demand_forecast"] = projection
-
+        total_sent = 0
         # Iteratively solving the inner loop problem
         for i in range(n_steps):
-
+            
             # Using a 1-week persistance forecast
             weather_forecast = (
-                self._weather_data[self.idx : self.idx + 7]
-                * (self._args["fast"]["horizon"] // 70)
-                + self._weather_data[
-                    self.idx : self.idx + self._args["fast"]["horizon"] % 7
-                ]
+                self._weather_data[self.idx : self.idx + 168] *
+                (len(self._fast_data["sets"]["grid0"]) //168) + 
+                self._weather_data[self.idx : (self.idx + 168) % 168]
             )
+                
 
             # Grabbing the relevant portion from the shipping schedule
-            shipping_schedule = action[i : i + n_steps]
+            shipping_schedule = {
+                key: value for key, value in action.items() if value < n_steps * 24
+            }
 
             # Simulating the randomness of the shipping schedule
             if 0 in ship_origin:
@@ -170,54 +171,54 @@ class ShippingEnvV1:
                 "T": {
                     "name": "T",
                     "loc": "exogenous",
-                    "param": {"set": None, "initialize": n_steps},
+                    "param": {"set": None, "initialize": n_steps * 24},
                 },
-                "shipping_schedule": {
-                    "name": "shipping_schedule",
+                "ship_schedule": {
+                    "name": "ship_schedule",
                     "loc": "exogenous",
                     "param": {
                         "set": self._fast_data["sets"]["grid1"],
                         "initialize": shipping_schedule,
                     },
                 },
-                "weather_forecast": {
-                    "name": "weather_forecast",
+                "energy_wind": {
+                    "name": "energy_wind",
                     "loc": "exogenous",
                     "param": {
                         "set": self._fast_data["sets"]["grid0"],
                         "initialize": weather_forecast,
                     },
                 },
-                "initial_ships": {
-                    "name": "current_ships",
+                "ship_arrived": {
+                    "name": "ship_arrived",
                     "loc": "endogenous",
                     "param": {
-                        "set": self._fast_data["sets"]["grid0"],
+                        "set": None,
                         "initialize": origin_arrive,
                     },
                 },
                 "initial_hydrogen_storage": {
-                    "name": "hydorgen_storage",
+                    "name": "hydrogen_stored",
                     "loc": "endogenous",
                     "param": {
                         "set": None,
-                        "initialize": latent_states["hydrogen_storage"],
+                        "initialize": latent_states["hydrogen_stored"],
                     },
                 },
                 "initial_vector_storage": {
-                    "name": "vector_storage",
+                    "name": "vector_stored",
                     "loc": "endogenous",
                     "param": {
                         "set": None,
-                        "initialize": latent_states["vector_storage"],
+                        "initialize": latent_states["vector_stored"],
                     },
                 },
                 "initial_conversion_process_state": {
-                    "name": "conversion_process_state",
+                    "name": "energy_conversion",
                     "loc": "endogenous",
                     "param": {
                         "set": None,
-                        "initialize": latent_states["conversion_process_state"],
+                        "initialize": latent_states["energy_conversion"],
                     },
                 },
                 "initial_cumulative_charge": {
@@ -233,12 +234,12 @@ class ShippingEnvV1:
             # Updating the fast model with the new parameters and solving it
             self._fast.update(fast_args)
             latent_states = self._fast.solve()
-
-            print(f"\r[Inner-Loop] Shipping schedule for day {i}", end=" " * 20)
+            total_sent += latent_states["sent_ship"]
+            print(f"\r[Inner-Loop] Shipping schedule for day {i}. {int(total_sent)} ships sent", end=" " * 20)
 
             # Randomly simulating the arrival of the ships
             if latent_states["ordered_ship"] >= 0:
-                ship_origin.extent(
+                ship_origin.extend(
                     [
                         int(
                             normal(
@@ -246,11 +247,11 @@ class ShippingEnvV1:
                                     self._fast_data["params"]["mean_ship_arrival_time"]
                                 ),
                                 value(
-                                    self._fast_data["params"]["srd_ship_arrival_time"]
+                                    self._fast_data["params"]["std_ship_arrival_time"]
                                 ),
                             )
                         )
-                        for _ in range(latent_states["ordered_ship"])
+                        for _ in range(int(latent_states["ordered_ship"]))
                     ]
                 )
 
@@ -267,7 +268,7 @@ class ShippingEnvV1:
                                 ),
                             )
                         )
-                        for _ in range(latent_states["sent_ship"])
+                        for _ in range(int(latent_states["sent_ship"]))
                     ]
                 )
 
@@ -283,7 +284,7 @@ class ShippingEnvV1:
             # Updating the state of the environment
             ship_origin = [val - 1 for val in ship_origin]
             ship_destination = [val - 1 for val in ship_destination]
-            self.idx += 1
+            self.idx += 24
             self._state = (
                 latent_states,
                 destination_storage,

@@ -13,6 +13,7 @@ from pyomo.environ import (
     Constraint,
     Objective,
     Reals,
+    Any
 )
 from .utils import add_equations
 from h2_plan.data import DefaultParams
@@ -39,14 +40,16 @@ class FastController:
             getattr(self.model2, key).construct()
 
         for key, param in data["params"].items():
-            setattr(self.model1, key, Param(initialize=param, within=Reals))
+            setattr(self.model1, key, Param(initialize=param, within=Any))
             getattr(self.model1, key).construct()
-            setattr(self.model2, key, Param(initialize=param, within=Reals))
+            setattr(self.model2, key, Param(initialize=param, within=Any))
             getattr(self.model2, key).construct()
 
         for key, var in data["vars"].items():
             setattr(self.model1, key, Var(*var["time_duration"], within=var["domain"]))
+            getattr(self.model1, key).construct()
             setattr(self.model2, key, Var(*var["time_duration"], within=var["domain"]))
+            getattr(self.model2, key).construct()
 
         for key, constraint in data["constraints"].items():
             if key in data["forms"]["primary"]:
@@ -55,12 +58,14 @@ class FastController:
                     key,
                     Constraint(*constraint["time_duration"], rule=constraint["rule"]),
                 )
+                #getattr(self.model1, key).construct()
             if key in data["forms"]["secondary"]:
                 setattr(
                     self.model2,
                     key,
                     Constraint(*constraint["time_duration"], rule=constraint["rule"]),
                 )
+                #getattr(self.model2, key).construct()
 
         for key, equation in data["equations"].items():
             if key in data["forms"]["primary"]:
@@ -69,25 +74,29 @@ class FastController:
                     key,
                     Constraint(*equation["time_duration"], rule=equation["rule"]),
                 )
+                #getattr(self.model1, key).construct()
             if key in data["forms"]["secondary"]:
                 setattr(
                     self.model2,
                     key,
                     Constraint(*equation["time_duration"], rule=equation["rule"]),
                 )
+                #getattr(self.model2, key).construct()
 
         for key, objective in data["objectives"].items():
             if key in data["forms"]["primary"]:
                 setattr(
                     self.model1,
                     key,
-                    Objective(expr=objective["expr"], sense=objective["sense"]),
+                    Objective(expr=objective["rule"], sense=objective["sense"]),
                 )
+                #getattr(self.model1, key).construct()
             if key in data["forms"]["secondary"]:
-                setattr(self.model2, key, objective)
-
-        self.instance1 = self.model1.create_instance()
-        self.instance2 = self.model2.create_instance()
+                setattr(self.model2,
+                        key, 
+                        Objective(expr=objective["rule"], sense=objective["sense"])
+                    )
+                #getattr(self.model2, key).construct()
 
         pass
 
@@ -95,14 +104,18 @@ class FastController:
         """
         This function solves the MPC problem
         """
+        self.instance1 = self.model1.create_instance()
+        self.instance2 = self.model2.create_instance()
+        
         self.solver = SolverFactory("gurobi")
         self.solver.options["mipgap"] = 0.05
-        self.solver.options["FeasibilityTol"] = 1e-6
+        self.solver.options["FeasibilityTol"] = 1e-4
         self.solver.options["OptimalityTol"] = 1e-6
 
         self.results = self.solver.solve(self.instance1, tee=False)
         self.lexicographic = 1
-        if self.results.solver.termination_condition == "infeasible":
+        if self.results.solver.termination_condition != "optimal":
+            print("[INFO] Infeasible problem, solving lexicographically")
             self.results = self.solver.solve(self.instance2, tee=False)
             self.lexicographic = 2
 
@@ -114,39 +127,54 @@ class FastController:
         """
 
         for key, param in data.items():
-            setattr(
-                self.instance1,
-                key,
-                Param(
-                    *(
-                        param["param"]["set"]
-                        if param["param"]["set"] is not None
-                        else None
+            if param["param"]["set"] is not None:
+                self.model1.del_component(key)
+                self.model2.del_component(key)
+
+                setattr(
+                    self.model1,
+                    key,
+                    Param(param["param"]["set"],
+                        initialize=param["param"]["initialize"],
+                        within=Reals,
                     ),
-                    initialize=param["param"]["initialize"],
-                    within=Reals,
-                ),
-            )
-            setattr(
-                self.instance2,
-                key,
-                Param(
-                    *(
-                        param["param"]["set"]
-                        if param["param"]["set"] is not None
-                        else None
+                )
+                getattr(
+                    self.model1, key
+                ).construct()
+                setattr(
+                    self.model2,
+                    key,
+                    Param(param["param"]["set"],
+                        initialize=param["param"]["initialize"],
+                        within=Reals,
                     ),
-                    initialize=param["param"]["initialize"],
-                    within=Reals,
-                ),
-            )
+                )
+                getattr(
+                    self.model2, key
+                ).construct()
+            else:
+                self.model1.del_component(key)
+                self.model2.del_component(key)
+                setattr(
+                    self.model1,
+                    key,
+                    Param(initialize=param["param"]["initialize"], within=Reals),
+                )
+                getattr(self.model1, key).construct()
+                setattr(
+                    self.model2,
+                    key,
+                    Param(initialize=param["param"]["initialize"], within=Reals),
+                )
+                getattr(self.model2, key).construct()
 
             # These keys will be used to grab the output
             if param["loc"] == "endogenous":
                 if self._update_keys is None:
                     self._update_keys = {key: param["name"]}
                 elif key not in self._update_keys:
-                    self._update_keys.append(key[3:])
+                    self._update_keys[key] = param["name"]
         pass
 
     def output(self, time_step: int = 24):
@@ -161,10 +189,10 @@ class FastController:
         else:
             solve = self.instance2
 
-        for key, name in self._update_keys:
-            if key == "current_ships":
+        for key, name in self._update_keys.items():
+            if name == "ship_arrived":
                 latent_states["current_ships"] = value(getattr(solve, "ship_arrived"))
-                -sum(value(getattr(solve, "n_ship_send")[t]) for t in range(time_step))
+                -sum(value(getattr(solve, "n_ship_sent")[t]) for t in range(time_step))
             else:
                 latent_states[name] = value(getattr(solve, name)[time_step])
 
@@ -175,5 +203,18 @@ class FastController:
         latent_states["sent_ship"] = sum(
             value(getattr(solve, "n_ship_sent")[t]) for t in range(time_step)
         )
+        obj = value(getattr(solve, "obj1"))
+        print(f"Objective value: {obj}")
+        import matplotlib.pyplot as plt
 
-        return latent_states
+        vector_stored = [
+            value(getattr(solve, "energy_fuelcell")[t]) for t in range(value(getattr(solve, "T")))
+            ]
+        plt.figure()
+        plt.plot(range(value(getattr(solve, "T"))), vector_stored, marker='o')
+        plt.xlabel("Time Step")
+        plt.ylabel("vector_stored")
+        plt.title("Value of vector_stored over Time")
+        plt.grid(True)
+        plt.show()
+        return latent_states 

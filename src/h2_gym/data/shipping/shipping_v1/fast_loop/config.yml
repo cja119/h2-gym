@@ -13,10 +13,13 @@ param_source:
     - hydrogen_storage_capacity
     - opex
     - renewable_energy_capacity
+    - renewables
+    - vector_storage_capacity
 
   default_data:
     electrolysis_efficiency: ["efficiencies", "electrolysers", "SOFC"]
     electrolysis_compression_penalty: ["miscillaneous", "electrolyser_compression_energy", "SOFC"]
+    vector_synthetic_efficiency: ["efficiencies", "vector_synthesis"]
     production_compression_penalty: ["miscillaneous", "vector_compression_penalty"]
     storage_compression_penalty: ["miscillaneous", "storage_compression_penalty"]
     compression_efficiency: ["efficiencies", "compressor"]
@@ -33,48 +36,50 @@ param_source:
 
 formulations:
   primary: [
-    "energy_balance",
-    "hydrogen_production",
-    "compression_balance",
-    "influent_hydrogen_balance",
-    "effluent_hydrogen_balance",
-    "fuel_cell_production",
-    "hydrogen_storage_balance",
-    "vector_production",
-    "vector_storage_balance",
-    "shipping_balance",
-    "lower_hydrogen_storage_limit",
-    "upper_hydrogen_storage_limit",
-    "lower_vector_storage_limit",
-    "upper_vector_storage_limit",
-    "lower_vector_ramping_limit",
-    "upper_vector_ramping_limit",
-    "ship_send_limit",
-    "ship_schedule_aux_upper",
-    "ship_arrival",
-    "ship_schedule_target",
-    "hydrogen_production_maximisation"
+    "eqn1",
+    "eqn2",
+    "eqn3",
+    "eqn4",
+    "eqn5",
+    "eqn6",
+    "eqn7",
+    "eqn8",
+    "eqn9",
+    "eqn10",
+    "cons1",
+    "cons2",
+    "cons3",
+    "cons4",
+    "cons5",
+    "cons6",
+    "cons7",
+    "cons8",
+    "cons10",
+    "cons11",
+    "cons12",
+    "obj1"
     ]
   secondary: [
-    "energy_balance",
-    "hydrogen_production",
-    "compression_balance",
-    "influent_hydrogen_balance",
-    "effluent_hydrogen_balance",
-    "fuel_cell_production",
-    "hydrogen_storage_balance",
-    "vector_production",
-    "vector_storage_balance",
-    "shipping_balance",
-    "lower_hydrogen_storage_limit",
-    "upper_hydrogen_storage_limit",
-    "lower_vector_storage_limit",
-    "upper_vector_storage_limit",
-    "lower_vector_ramping_limit",
-    "upper_vector_ramping_limit",
-    "ship_send_limit",
-    "ship_schedule_aux_lower",
-    "ship_schedule_aux_upper",
-    "ship_arrival",
-    "shipping_target"
+    "eqn1",
+    "eqn2",
+    "eqn3",
+    "eqn4",
+    "eqn5",
+    "eqn6",
+    "eqn7",
+    "eqn8",
+    "eqn9",
+    "eqn10",
+    "cons1",
+    "cons2",
+    "cons3",
+    "cons4",
+    "cons5",
+    "cons6",
+    "cons7",
+    "cons8",
+    "cons9",
+    "cons10",
+    "cons12",
+    "obj2"
     ]

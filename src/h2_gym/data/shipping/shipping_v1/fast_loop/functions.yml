@@ -63,6 +63,9 @@ constraints:
   cons11:
     name: "ship_schedule_target"
     domain: ["grid1"]
+  cons12:
+    name: "upper_vector_production_limit"
+    domain: ["grid1"]
 objectives:
   obj1: 
     name: "hydrogen_production_maximisation"
