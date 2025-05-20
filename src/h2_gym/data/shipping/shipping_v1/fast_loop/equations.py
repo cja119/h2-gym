@@ -74,6 +74,7 @@ def effluent_hydrogen_balance(m, t):
     eqn = 0
 
     eqn += m.vector_flux[t] / m.vector_synthetic_efficiency
+    eqn += m.hydrogen_consumed_fuelcell[t]
     eqn -= m.hydrogen_used[t]
     eqn -= m.hydrogen_removed[t]
 
@@ -98,14 +99,13 @@ def hydrogen_storage_balance(m, t):
     """
     eqn = 0
     if t == 0:
-        eqn += m.hydrogen_stored[t]
+        eqn += m.hydrogen_storage[t]
         eqn -= m.initial_hydrogen_storage
     else:
-        eqn += m.hydrogen_stored[t]
-        eqn -= m.hydrogen_stored[t - 1]
+        eqn += m.hydrogen_storage[t]
+        eqn -= m.hydrogen_storage[t - 1]
         eqn += m.hydrogen_removed[t]
-        eqn -= m.hydrogen_stored[t]
-        eqn -= m.hydrogen_consumed_fuelcell[t]
+        eqn -= m.hydrogen_produced[t]
     return eqn == 0
 
 
@@ -139,12 +139,12 @@ def vector_storage_balance(m, t):
     """
     eqn = 0
     if t == 0:
-        eqn += m.vector_stored[t]
+        eqn += m.vector_storage[t]
         eqn -= m.initial_vector_storage
     else:
-        eqn += (m.vector_stored[t] - m.vector_stored[t - 1]) * 1000
-        eqn += m.vector_flux[t] * m.conversion_fugitive_efficiency
-        eqn -= m.ship_charge_rate[t]
+        eqn += (m.vector_storage[t] - m.vector_storage[t - 1]) * 1000
+        eqn -= m.vector_flux[t] * m.conversion_fugitive_efficiency / m.calorific_value
+        eqn += m.ship_charge_rate[t]
 
     return eqn == 0
 
@@ -156,10 +156,8 @@ def shipping_balance(m, t):
     eqn = 0
 
     eqn += m.cumulative_charge[t]
-
-    if t == 0:
-        eqn -= m.initial_cumulative_charge
-    else:
+    eqn -= m.initial_cumulative_charge
+    if t > 0:
         eqn -= sum(m.ship_charge_rate[_t] for _t in range(t))
         eqn += sum(m.n_ship_sent[_t] * m.ship_capacity for _t in range(t))
 
@@ -173,7 +171,7 @@ def lower_hydrogen_storage_limit(m, t):
     cons = 0
 
     cons += m.hydrogen_storage_capacity * 0.2
-    cons -= m.hydrogen_stored[t]
+    cons -= m.hydrogen_storage[t]
 
     return cons <= 0
 
@@ -184,7 +182,7 @@ def upper_hydrogen_storage_limit(m, t):
     """
     cons = 0
 
-    cons += m.hydrogen_stored[t] 
+    cons += m.hydrogen_storage[t] 
     cons -= m.hydrogen_storage_capacity
 
     return cons <= 0
@@ -197,7 +195,7 @@ def lower_vector_storage_limit(m, t):
     cons = 0
 
     cons += m.vector_storage_capacity * 0.2
-    cons -= m.vector_stored[t]
+    cons -= m.vector_storage[t]
 
     return cons <= 0
 
@@ -208,7 +206,7 @@ def upper_vector_storage_limit(m, t):
     """
     cons = 0
 
-    cons += m.vector_stored[t]
+    cons += m.vector_storage[t]
     cons -= m.vector_storage_capacity
 
     return cons <= 0
@@ -262,8 +260,8 @@ def ship_send_limit(m, t):
     """
     cons = 0
 
-    cons += m.n_ship_sent[t] * m.ship_capacity
-    cons -= m.cumulative_charge[t]
+    cons -= m.ship_capacity
+    cons += m.cumulative_charge[t]
 
     return cons <= 0
 
@@ -272,45 +270,55 @@ def ship_schedule_aux_lower(m, _t):
     """
     Ship schedule auxiliary equation for the lower production problem.
     """
-    if _t <= m.T:
-        cons = 0
-        cons += m.n_ship_aux[_t]
-        cons -= m.ship_schedule[_t] - sum(m.n_ship_sent[t] for t in range(_t , _t + 24))
-        return cons <= 0
-    else:
-        return Constraint.Skip
+    cons = 0
+    cons += m.n_ship_aux[_t]
+
+    if _t >= 24:
+        cons -= m.ship_schedule[_t] - sum(m.n_ship_sent[t] for t in range(_t -24, _t))
+        
+    return cons <= 0
 
 
 def ship_schedule_aux_upper(m, _t):
     """
     Ship schedule auxiliary equation for the lower production problem.
     """
-    if _t <= m.T:
-        cons = 0
-        cons -= m.n_ship_aux[_t]
-        cons += m.ship_schedule[_t] - sum(m.n_ship_sent[t] for t in range(_t, _t + 24))
-        return cons <= 0
+    cons = 0
+    cons += m.n_ship_aux[_t]
+
+    if _t >= 24:
+        cons += m.ship_schedule[_t] - sum(m.n_ship_sent[t] for t in range(_t-24, _t))
+    return cons <= 0
+
+def port_capacity(m, t):
+    """
+    Constraint on the port capacity for the lower production problem.
+    """
+
+    cons = 0
+    if t >= 24:
+        cons +=  sum(
+            m.n_ship_ordered[_t] for _t in range(0, t - 24)
+        )
+        
     else:
-        return Constraint.Skip
+        cons += m.ship_arrived
+    cons -= sum(m.n_ship_sent[_t] for _t in range(t))
+    cons -= m.waiting_ships[t]
+    return cons <= 0
 
 def ship_arrival(m, t):
     """
     Ship arrival balance equation for the lower production problem.
     """
     cons = 0
-    cons += m.ship_charge_rate[t]
-
-    if t <= 24:
-        if (
-            m.ship_arrived > 0
-            and sum(m.n_ship_sent[_t] for _t in range(t)) < m.ship_arrived
-        ):
-            cons -= m.ship_charge_limit * m.ship_arrived
-    else:
-        cons += m.ship_charge_limit * sum(
+    cons += m.ship_charge_rate[t] * m.ship_charge_limit / m.ship_capacity
+    cons -= m.ship_arrived
+    if t >= 24:
+        cons -=  sum(
             m.n_ship_ordered[_t] for _t in range(0, t - 24)
         )
-        cons -= m.ship_charge_limit * sum(m.n_ship_sent[_t] for _t in range(t))
+    cons += sum(m.n_ship_sent[_t] for _t in range(t))
 
     return cons <= 0
 
@@ -336,6 +344,23 @@ def upper_vector_production_limit(m, t):
 
     return cons <= 0
 
+def objective_1_bound(m):
+    """
+    Objective 1 bound equation for the lower production problem.
+    """
+    obj = 0
+    obj += sum(m.vector_flux[t] for t in m.grid0)
+    return obj <= 10000
+
+def objective_2_bound(m):
+    """
+    Objective 1 bound equation for the lower production problem.
+    """
+    obj = 0
+    obj -= sum(m.n_ship_aux[t]  for t in m.grid1)
+    return obj >= -100
+
+
 def hydrogen_production_maximisation(m):
     """
     Hydrogen production maximisation equation for the lower production problem.
@@ -350,5 +375,7 @@ def shipping_target(m):
     Shipping target equation for the lower production problem.
     """
     obj = 0
-    obj -= sum(m.n_ship_aux[t]  for t in m.grid1)
+    obj -= sum(m.n_ship_aux[t]  for t in m.grid1) * m.ship_capacity * m.calorific_value / 120 * 5000
+    obj += sum(m.waiting_ships[t] for t in m.grid0) * (m.ship_berthing_rate + m.ship_charter_rate)
+    obj += sum(m.n_ship_ordered[t] for t in m.grid0) * (m.ship_charter_rate) * 35 * 24
     return obj

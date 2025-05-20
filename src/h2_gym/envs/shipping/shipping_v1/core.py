@@ -35,8 +35,8 @@ class ShippingEnvV1:
         self._slow_data = {
             "params": {
                 "storage_capacity": 10,
-                "mean_transit_time": 35,
-                "std_transit_time": 2,
+                "mean_ship_transit_time": 35,
+                "std_ship_transit_time": 2,
             }
         }
         pass
@@ -86,10 +86,10 @@ class ShippingEnvV1:
         self._fast.build(self._fast_data)
 
         latent_states = {
-            "current_ships": 0,
-            "hydrogen_stored": 0.5 
+            "current_ships": 1,
+            "hydrogen_storage": 0.5 
             * self._fast_data["params"]["hydrogen_storage_capacity"],
-            "vector_stored": 0.5
+            "vector_storage": 0.5
             * self._fast_data["params"]["vector_storage_capacity"],
             "energy_conversion": (
                 0.5
@@ -114,6 +114,9 @@ class ShippingEnvV1:
         )
 
         pass
+
+    def render(self, mode="human"):
+        return self._fast.render()
 
     def reset(self) -> None:
         """
@@ -156,7 +159,8 @@ class ShippingEnvV1:
 
             # Grabbing the relevant portion from the shipping schedule
             shipping_schedule = {
-                key: value for key, value in action.items() if value < n_steps * 24
+                key - self.idx: value for key, value in action.items() \
+                    if key < 336 + self.idx and key - self.idx > 0
             }
 
             # Simulating the randomness of the shipping schedule
@@ -164,9 +168,12 @@ class ShippingEnvV1:
                 n_arrived_ships = ship_origin.count(0)
                 ship_origin.remove(0)
                 origin_arrive = n_arrived_ships + latent_states["current_ships"]
+                print(f"{n_arrived_ships=}")
             else:
                 origin_arrive = latent_states["current_ships"]
             # Building the parameter dictionary for the fast model
+            print(f"{origin_arrive=}")
+           
             fast_args = {
                 "T": {
                     "name": "T",
@@ -198,19 +205,19 @@ class ShippingEnvV1:
                     },
                 },
                 "initial_hydrogen_storage": {
-                    "name": "hydrogen_stored",
+                    "name": "hydrogen_storage",
                     "loc": "endogenous",
                     "param": {
                         "set": None,
-                        "initialize": latent_states["hydrogen_stored"],
+                        "initialize": latent_states["hydrogen_storage"],
                     },
                 },
                 "initial_vector_storage": {
-                    "name": "vector_stored",
+                    "name": "vector_storage",
                     "loc": "endogenous",
                     "param": {
                         "set": None,
-                        "initialize": latent_states["vector_stored"],
+                        "initialize": latent_states["vector_storage"],
                     },
                 },
                 "initial_conversion_process_state": {
@@ -249,7 +256,7 @@ class ShippingEnvV1:
                                 value(
                                     self._fast_data["params"]["std_ship_arrival_time"]
                                 ),
-                            )
+                            ) / 24
                         )
                         for _ in range(int(latent_states["ordered_ship"]))
                     ]
@@ -266,7 +273,7 @@ class ShippingEnvV1:
                                 value(
                                     self._slow_data["params"]["std_ship_transit_time"]
                                 ),
-                            )
+                            ) / 24
                         )
                         for _ in range(int(latent_states["sent_ship"]))
                     ]
@@ -293,5 +300,7 @@ class ShippingEnvV1:
             )
             observation["destination_storage"] = destination_storage
             observation["ship_destination"] = ship_destination
+            
+            yield self._fast.render()
 
         return observation, 0, False, {}

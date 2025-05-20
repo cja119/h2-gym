@@ -15,9 +15,15 @@ from pyomo.environ import (
     Reals,
     Any
 )
-from .utils import add_equations
+from .utils import add_equations, suppress_output
 from h2_plan.data import DefaultParams
 from h2_gym.envs import Planning
+import matplotlib
+import matplotlib.pyplot as plt
+import logging
+
+
+matplotlib.use('TkAgg')  
 
 
 class FastController:
@@ -27,7 +33,12 @@ class FastController:
         self.model1 = AbstractModel()
         self.model2 = AbstractModel()
         self._update_keys = None
+        self._fig, self._axs = plt.subplots(2, 3, figsize=(18, 10), sharex=True)
+        self._run_count = 1
         pass
+
+    def render(self):
+        return self._fig
 
     def build(self, data: dict):
         """
@@ -111,8 +122,8 @@ class FastController:
         self.solver.options["mipgap"] = 0.05
         self.solver.options["FeasibilityTol"] = 1e-4
         self.solver.options["OptimalityTol"] = 1e-6
-
-        self.results = self.solver.solve(self.instance1, tee=False)
+        with suppress_output():
+            self.results = self.solver.solve(self.instance1, tee=False)
         self.lexicographic = 1
         if self.results.solver.termination_condition != "optimal":
             print("[INFO] Infeasible problem, solving lexicographically")
@@ -179,42 +190,88 @@ class FastController:
 
     def output(self, time_step: int = 24):
         """
-        Grabs the necessary latent stated of the model for future solves
+        Extracts latent states and dynamically updates plots across runs.
         """
 
         latent_states = {}
+        solve = self.instance1 if self.lexicographic == 1 else self.instance2
 
-        if self.lexicographic == 1:
-            solve = self.instance1
+        # Extract latent states
+        latent_states["current_ships"] = (
+            value(getattr(solve, "ship_arrived"))
+            - sum(value(getattr(solve, "n_ship_sent")[t]) for t in range(time_step))
+        )
+        latent_states["hydrogen_storage"] = value(getattr(solve, "hydrogen_storage")[time_step])
+        latent_states["vector_storage"] = value(getattr(solve, "vector_storage")[time_step])
+        latent_states["energy_conversion"] = value(getattr(solve, "energy_conversion")[time_step])
+        latent_states["cumulative_charge"] = value(getattr(solve, "cumulative_charge")[time_step])
+        latent_states["ordered_ship"] = sum(value(getattr(solve, "n_ship_ordered")[t]) for t in range(time_step))
+        latent_states["sent_ship"] = sum(value(getattr(solve, "n_ship_sent")[t]) for t in range(time_step))
+
+        # Gather time-series data
+        steps = range(self._run_count* time_step, (self._run_count + 1) *time_step + 1)
+        n_ship_ordered = [value(getattr(solve, "n_ship_ordered")[t]) for t in steps]
+        n_ship_sent = [value(getattr(solve, "n_ship_sent")[t]) for t in steps]
+        vector_storage = [value(getattr(solve, "vector_storage")[t]) for t in steps]
+        cumulative_charge = [value(getattr(solve, "cumulative_charge")[t]) for t in steps]
+        energy_turbine = [value(getattr(solve, "energy_wind")[t]) for t in steps]
+        energy_conversion = [value(getattr(solve, "energy_conversion")[t]) for t in steps]
+
+        axs = self._axs
+        label = f"Run {self._run_count}"
+
+
+        # Plot all subplots, joining with previous runs
+        if self._run_count == 1:
+            # First run: initialize data storage for joined plots
+            self._joined_data = {
+            "steps": list(steps),
+            "n_ship_ordered": list(n_ship_ordered),
+            "n_ship_sent": list(n_ship_sent),
+            "vector_storage": list(vector_storage),
+            "cumulative_charge": list(cumulative_charge),
+            "energy_turbine": list(energy_turbine),
+            "energy_conversion": list(energy_conversion),
+            }
         else:
-            solve = self.instance2
+            # Append new data to existing joined data
+            self._joined_data["steps"].extend(steps)
+            self._joined_data["n_ship_ordered"].extend(n_ship_ordered)
+            self._joined_data["n_ship_sent"].extend(n_ship_sent)
+            self._joined_data["vector_storage"].extend(vector_storage)
+            self._joined_data["cumulative_charge"].extend(cumulative_charge)
+            self._joined_data["energy_turbine"].extend(energy_turbine)
+            self._joined_data["energy_conversion"].extend(energy_conversion)
 
-        for key, name in self._update_keys.items():
-            if name == "ship_arrived":
-                latent_states["current_ships"] = value(getattr(solve, "ship_arrived"))
-                -sum(value(getattr(solve, "n_ship_sent")[t]) for t in range(time_step))
-            else:
-                latent_states[name] = value(getattr(solve, name)[time_step])
+        # Plot joined data
+        axs[0, 0].plot(self._joined_data["steps"], self._joined_data["n_ship_ordered"],  label=label, color='blue')
+        axs[0, 0].set(title="n_ship_ordered", xlabel="Time Step", ylabel="Count")
+        axs[0, 0].grid(True)
 
-        latent_states["ordered_ship"] = sum(
-            value(getattr(solve, "n_ship_ordered")[t]) for t in range(time_step)
-        )
+        axs[0, 1].plot(self._joined_data["steps"], self._joined_data["n_ship_sent"],  label=label, color='orange')
+        axs[0, 1].set(title="n_ship_sent", xlabel="Time Step", ylabel="Count")
+        axs[0, 1].grid(True)
 
-        latent_states["sent_ship"] = sum(
-            value(getattr(solve, "n_ship_sent")[t]) for t in range(time_step)
-        )
-        obj = value(getattr(solve, "obj1"))
-        print(f"Objective value: {obj}")
-        import matplotlib.pyplot as plt
+        axs[0, 2].plot(self._joined_data["steps"], self._joined_data["vector_storage"],  label=label, color='green')
+        axs[0, 2].set(title="vector_storage", xlabel="Time Step", ylabel="Units")
+        axs[0, 2].grid(True)
 
-        vector_stored = [
-            value(getattr(solve, "energy_fuelcell")[t]) for t in range(value(getattr(solve, "T")))
-            ]
-        plt.figure()
-        plt.plot(range(value(getattr(solve, "T"))), vector_stored, marker='o')
-        plt.xlabel("Time Step")
-        plt.ylabel("vector_stored")
-        plt.title("Value of vector_stored over Time")
-        plt.grid(True)
-        plt.show()
-        return latent_states 
+        axs[1, 0].plot(self._joined_data["steps"], self._joined_data["cumulative_charge"],  label=label, color='purple')
+        axs[1, 0].set(title="cumulative_charge", xlabel="Time Step", ylabel="Energy")
+        axs[1, 0].grid(True)
+
+        axs[1, 1].plot(self._joined_data["steps"], self._joined_data["energy_turbine"],  label=label, color='red')
+        axs[1, 1].set(title="energy_turbine", xlabel="Time Step", ylabel="Energy")
+        axs[1, 1].grid(True)
+
+        axs[1, 2].plot(self._joined_data["steps"], self._joined_data["energy_conversion"],  label=label, color='brown')
+        axs[1, 2].set(title="energy_conversion", xlabel="Time Step", ylabel="Energy")
+        axs[1, 2].grid(True)
+
+        plt.tight_layout()
+        
+        self._fig.canvas.draw()  # Redraw canvas if needed
+        self._run_count += 1
+
+        # Let notebook handle display (or suppress in batch mode)
+        return latent_states

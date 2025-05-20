@@ -66,10 +66,19 @@ constraints:
   cons12:
     name: "upper_vector_production_limit"
     domain: ["grid1"]
+  cons13:
+    name: "objective_1_bound"
+    domain: []
+  cons14:
+    name: "objective_2_bound"
+    domain: []
+  cons15:
+    name: "port_capacity"
+    domain: [grid0]
 objectives:
   obj1: 
-    name: "hydrogen_production_maximisation"
-    sense: "max"
+    name: "shipping_target"
+    sense: "min"
   obj2:
     name: "shipping_target"
     sense: "min"

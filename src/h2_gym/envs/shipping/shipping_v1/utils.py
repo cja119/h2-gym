@@ -9,29 +9,14 @@ from h2_plan.data import DefaultParams
 from pyomo.environ import (
     maximize,
     minimize,
-    Var,
     NonNegativeIntegers,
     NonNegativeReals,
+    Reals
 )
 from numpy.random import rand
 from random import randint
 from glob import glob
 import yaml
-
-
-def optimisation_handover(model):
-    """
-    This function is used to handover the results of the optimisation to the environment.
-    """
-    pass
-
-
-def environment_handover(model):
-    """
-    This function is used to handover the results of the environment to the optimisation.
-    """
-    pass
-
 
 def import_slow_data():
     """
@@ -121,7 +106,8 @@ def import_fast_data(
             "domain": (
                 NonNegativeReals
                 if value["domain"] == "positive_real"
-                else NonNegativeIntegers
+                else NonNegativeIntegers if value["domain"] == "positive_integer"  
+                else Reals
             ),
         }
 
@@ -130,7 +116,6 @@ def import_fast_data(
 
     for key, value in config["formulations"].items():
         forms[key] = value
-
     return {"sets": sets, "params": params, "vars": vars, "forms": forms}
 
 
