@@ -17,8 +17,6 @@ def add_equations(model, environment_name: str) -> None:
         current_path.parent.parent / "data/shipping/" + environment_name + "/fast_loop"
     )
 
-
-
 @contextlib.contextmanager
 def suppress_output():
     with open(os.devnull, "w") as devnull:

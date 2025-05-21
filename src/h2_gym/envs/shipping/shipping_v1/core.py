@@ -87,7 +87,7 @@ class ShippingEnvV1:
 
         latent_states = {
             "current_ships": 1,
-            "hydrogen_storage": 0.5 
+            "hydrogen_storage": 0.5
             * self._fast_data["params"]["hydrogen_storage_capacity"],
             "vector_storage": 0.5
             * self._fast_data["params"]["vector_storage_capacity"],
@@ -146,21 +146,24 @@ class ShippingEnvV1:
         projection = demand_forecast["predicted_mean"].values
         observation["demand_forecast"] = projection
         total_sent = 0
+
+        #
+        results = None
         # Iteratively solving the inner loop problem
         for i in range(n_steps):
-            
+
             # Using a 1-week persistance forecast
             weather_forecast = (
-                self._weather_data[self.idx : self.idx + 168] *
-                (len(self._fast_data["sets"]["grid0"]) //168) + 
-                self._weather_data[self.idx : (self.idx + 168) % 168]
+                self._weather_data[self.idx : self.idx + 168]
+                * (len(self._fast_data["sets"]["grid0"]) // 168)
+                + self._weather_data[self.idx : (self.idx + 168) % 168]
             )
-                
 
             # Grabbing the relevant portion from the shipping schedule
             shipping_schedule = {
-                key - self.idx: value for key, value in action.items() \
-                    if key < 336 + self.idx and key - self.idx > 0
+                key - self.idx: value
+                for key, value in action.items()
+                if key < 336 + self.idx and key - self.idx > 0
             }
 
             # Simulating the randomness of the shipping schedule
@@ -173,13 +176,11 @@ class ShippingEnvV1:
                 origin_arrive = latent_states["current_ships"]
             # Building the parameter dictionary for the fast model
             print(f"{origin_arrive=}")
-           
+            ship_schedule = {
+                key - self.idx: value for key, value in shipping_schedule.items()
+            }
+            print(f"{ship_schedule=}")
             fast_args = {
-                "T": {
-                    "name": "T",
-                    "loc": "exogenous",
-                    "param": {"set": None, "initialize": n_steps * 24},
-                },
                 "ship_schedule": {
                     "name": "ship_schedule",
                     "loc": "exogenous",
@@ -204,45 +205,17 @@ class ShippingEnvV1:
                         "initialize": origin_arrive,
                     },
                 },
-                "initial_hydrogen_storage": {
-                    "name": "hydrogen_storage",
-                    "loc": "endogenous",
-                    "param": {
-                        "set": None,
-                        "initialize": latent_states["hydrogen_storage"],
-                    },
-                },
-                "initial_vector_storage": {
-                    "name": "vector_storage",
-                    "loc": "endogenous",
-                    "param": {
-                        "set": None,
-                        "initialize": latent_states["vector_storage"],
-                    },
-                },
-                "initial_conversion_process_state": {
-                    "name": "energy_conversion",
-                    "loc": "endogenous",
-                    "param": {
-                        "set": None,
-                        "initialize": latent_states["energy_conversion"],
-                    },
-                },
-                "initial_cumulative_charge": {
-                    "name": "cumulative_charge",
-                    "loc": "endogenous",
-                    "param": {
-                        "set": None,
-                        "initialize": latent_states["cumulative_charge"],
-                    },
-                },
             }
 
             # Updating the fast model with the new parameters and solving it
-            self._fast.update(fast_args)
-            latent_states = self._fast.solve()
+            self._fast.update(fast_args, results)
+            results, latent_states = self._fast.solve()
+            self._fast.visualise_output(24)
             total_sent += latent_states["sent_ship"]
-            print(f"\r[Inner-Loop] Shipping schedule for day {i}. {int(total_sent)} ships sent", end=" " * 20)
+            print(
+                f"\r[Inner-Loop] Shipping schedule for day {i}. {int(total_sent)} ships sent",
+                end=" " * 20,
+            )
 
             # Randomly simulating the arrival of the ships
             if latent_states["ordered_ship"] >= 0:
@@ -256,7 +229,7 @@ class ShippingEnvV1:
                                 value(
                                     self._fast_data["params"]["std_ship_arrival_time"]
                                 ),
-                            ) / 24
+                            )
                         )
                         for _ in range(int(latent_states["ordered_ship"]))
                     ]
@@ -273,7 +246,7 @@ class ShippingEnvV1:
                                 value(
                                     self._slow_data["params"]["std_ship_transit_time"]
                                 ),
-                            ) / 24
+                            )
                         )
                         for _ in range(int(latent_states["sent_ship"]))
                     ]
@@ -300,7 +273,7 @@ class ShippingEnvV1:
             )
             observation["destination_storage"] = destination_storage
             observation["ship_destination"] = ship_destination
-            
+
             yield self._fast.render()
 
         return observation, 0, False, {}

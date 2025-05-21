@@ -11,12 +11,13 @@ from pyomo.environ import (
     minimize,
     NonNegativeIntegers,
     NonNegativeReals,
-    Reals
+    Reals,
 )
 from numpy.random import rand
 from random import randint
 from glob import glob
 import yaml
+
 
 def import_slow_data():
     """
@@ -98,7 +99,6 @@ def import_fast_data(
 
         if item in data:
             params[item] = data[item]
-        
 
     for _, value in variables["variables"].items():
         vars[value["name"]] = {
@@ -106,8 +106,11 @@ def import_fast_data(
             "domain": (
                 NonNegativeReals
                 if value["domain"] == "positive_real"
-                else NonNegativeIntegers if value["domain"] == "positive_integer"  
-                else Reals
+                else (
+                    NonNegativeIntegers
+                    if value["domain"] == "positive_integer"
+                    else Reals
+                )
             ),
         }
 
