@@ -12,6 +12,7 @@ from meteor_py import GetData
 from random import randint
 from pathlib import Path
 from numpy.random import normal
+from numpy import mean
 import yaml
 from .utils import (
     import_fast_data,
@@ -105,12 +106,16 @@ class ShippingEnvV1:
         destination_storage = 0.5 * self._slow_data["params"]["storage_capacity"]
         ship_destination = []
         ship_origin = []
+        expected_arrivals = []
+        expected_destinations = []
 
         self._state = (
             latent_states,
             destination_storage,
             ship_destination,
             ship_origin,
+            expected_arrivals,
+            expected_destinations
         )
 
         pass
@@ -126,14 +131,15 @@ class ShippingEnvV1:
             pass
         pass
 
-    def step(self, action):
+    def step(self, action, plot = False):
         """
         Extracts data from the model, solves the inner loop and hands over the results to the outer loop
         """
 
         observation = {}
 
-        (latent_states, destination_storage, ship_destination, ship_origin) = (
+        (latent_states, destination_storage, ship_destination, ship_origin, 
+        expected_arrivals, expected_destinations) = (
             self._state
         )
 
@@ -145,41 +151,43 @@ class ShippingEnvV1:
         n_steps = demand_forecast.index[0].days_in_month
         projection = demand_forecast["predicted_mean"].values
         observation["demand_forecast"] = projection
+        
         total_sent = 0
 
         #
         results = None
+
         # Iteratively solving the inner loop problem
-        for i in range(n_steps):
+        for i in range(n_steps +61):
 
             # Using a 1-week persistance forecast
             weather_forecast = (
                 self._weather_data[self.idx : self.idx + 168]
-                * (len(self._fast_data["sets"]["grid0"]) // 168)
-                + self._weather_data[self.idx : (self.idx + 168) % 168]
+                + (len(self._fast_data["sets"]["grid0"]) - 168)
+                * [mean(self._weather_data)]
             )
 
             # Grabbing the relevant portion from the shipping schedule
             shipping_schedule = {
                 key - self.idx: value
                 for key, value in action.items()
-                if key < 336 + self.idx and key - self.idx > 0
+                if key < len(self._fast_data["sets"]["grid0"]) + self.idx and key - self.idx > 0
             }
-
+        
             # Simulating the randomness of the shipping schedule
             if 0 in ship_origin:
                 n_arrived_ships = ship_origin.count(0)
                 ship_origin.remove(0)
-                origin_arrive = n_arrived_ships + latent_states["current_ships"]
-                print(f"{n_arrived_ships=}")
+                origin_arrive = n_arrived_ships 
+                expected_arrivals = expected_arrivals[n_arrived_ships:]
             else:
-                origin_arrive = latent_states["current_ships"]
-            # Building the parameter dictionary for the fast model
-            print(f"{origin_arrive=}")
-            ship_schedule = {
-                key - self.idx: value for key, value in shipping_schedule.items()
-            }
-            print(f"{ship_schedule=}")
+                origin_arrive = 0
+
+
+            expected_arrivals_indexed = {i:0 for i in self._fast_data["sets"]["grid1"]}
+            for arrival in  expected_arrivals:
+                expected_arrivals_indexed[int(arrival)*24] += 1
+
             fast_args = {
                 "ship_schedule": {
                     "name": "ship_schedule",
@@ -199,17 +207,24 @@ class ShippingEnvV1:
                 },
                 "ship_arrived": {
                     "name": "ship_arrived",
-                    "loc": "endogenous",
+                    "loc": "exogenous",
                     "param": {
                         "set": None,
                         "initialize": origin_arrive,
                     },
                 },
+                "expected_ships": {
+                    "name": "expected_ships",
+                    "loc": "exogenous",
+                    "param": {
+                        "set": self._fast_data["sets"]["grid1"],
+                        "initialize": expected_arrivals_indexed,
+                    },
+                },
             }
-
             # Updating the fast model with the new parameters and solving it
             self._fast.update(fast_args, results)
-            results, latent_states = self._fast.solve()
+            results, latent_states = self._fast.solve(not plot)
             self._fast.visualise_output(24)
             total_sent += latent_states["sent_ship"]
             print(
@@ -234,7 +249,8 @@ class ShippingEnvV1:
                         for _ in range(int(latent_states["ordered_ship"]))
                     ]
                 )
-
+                expected_arrivals.extend([self._fast_data["params"]["mean_ship_arrival_time"]]*int(latent_states["ordered_ship"]))
+                
             if latent_states["sent_ship"] >= 0:
                 ship_destination.extend(
                     [
@@ -251,6 +267,7 @@ class ShippingEnvV1:
                         for _ in range(int(latent_states["sent_ship"]))
                     ]
                 )
+                expected_destinations.extend([self._slow_data["params"]["mean_ship_transit_time"]]*int(latent_states["sent_ship"]))
 
             # Simulating the destination storage
             if 0 in ship_destination:
@@ -260,11 +277,15 @@ class ShippingEnvV1:
                 destination_storage += n_arrived_ships * value(
                     self._fast_data["params"]["ship_capacity"]
                 )
+                
 
             # Updating the state of the environment
             ship_origin = [val - 1 for val in ship_origin]
+            expected_arrivals = [val - 1 for val in expected_arrivals if val >= 1]
             ship_destination = [val - 1 for val in ship_destination]
+            expected_destinations = [val - 1 for val in expected_destinations if val >= 0]
             self.idx += 24
+            
             self._state = (
                 latent_states,
                 destination_storage,
@@ -274,6 +295,9 @@ class ShippingEnvV1:
             observation["destination_storage"] = destination_storage
             observation["ship_destination"] = ship_destination
 
-            yield self._fast.render()
+            if plot:
+                yield self._fast.render()
+            else:
+                yield None
 
         return observation, 0, False, {}

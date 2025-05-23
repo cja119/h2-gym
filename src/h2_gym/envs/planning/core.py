@@ -126,6 +126,7 @@ class Planning:
         """
         if target is None:
             target = Path(__file__).parent.parent.parent / "tmp/planning"
+        print(target)
         self._res = PlanningResults(self._model).extract_results(target)
 
         return self._res

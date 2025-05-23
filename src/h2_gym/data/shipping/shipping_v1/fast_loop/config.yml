@@ -1,7 +1,8 @@
 Time:
   grid0: 1
   grid1: 24
-  total_duration: 336
+  grid2: 12
+  total_duration: 672
 
 param_source:
   planning_model:
@@ -35,6 +36,7 @@ param_source:
     ship_charge_limit: ["shipping", "loading_time"]
     ship_charter_rate: ["shipping", "charter_rate"]
     ship_berthing_rate : ["shipping", "berthing_rate"]
+    discount_factor: ["miscillaneous", "discount_factor"]
 
 formulations:
   primary: [
@@ -48,6 +50,8 @@ formulations:
     "eqn8",
     "eqn9",
     "eqn10",  
+    "eqn11",
+    "eqn12",
     "cons1",
     "cons2",
     "cons3",
@@ -55,12 +59,9 @@ formulations:
     "cons5",
     "cons6",
     "cons7",
-    "cons9",
     "cons10",
-    "cons11",
     "cons12",
-    "cons15",
-    "cons14",
+    "cons13",
     "obj1"
     ]
   secondary: [
@@ -74,6 +75,8 @@ formulations:
     "eqn8",
     "eqn9",
     "eqn10",
+    "eqn11",
+    "eqn12",
     "cons1",
     "cons2",
     "cons3",
@@ -81,9 +84,8 @@ formulations:
     "cons5",
     "cons6",
     "cons7",
-    "cons8",
-    "cons9",
     "cons10",
     "cons12",
-    "obj2"
+    "cons13",
+    "obj1"
     ]

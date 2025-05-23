@@ -111,7 +111,10 @@ def hydrogen_storage_balance(m, t):
     Hydrogen storage balance equation for the lower production problem.
     """
     if t == 0:
-        return Constraint.Skip
+        if m.fixed.value is True:
+            return Constraint.Skip
+        else:
+            return m.hydrogen_storage[t] == 0.5 * m.hydrogen_storage_capacity
     eqn = 0
     eqn += m.hydrogen_storage[t]
     eqn -= m.hydrogen_storage[t - 1]
@@ -126,6 +129,7 @@ def vector_production(m, t):
     """
     if t == 0 and m.fixed.value is True:
         return Constraint.Skip
+    
     eqn = 0
 
     eqn += (
@@ -151,7 +155,10 @@ def vector_storage_balance(m, t):
     Vector storage balance equation for the lower production problem.
     """
     if t == 0:
-        return Constraint.Skip
+        if m.fixed.value is True:
+            return Constraint.Skip
+        else:
+            return m.vector_storage[t] == 0.5 * m.vector_storage_capacity
     eqn = 0
     eqn += (m.vector_storage[t] - m.vector_storage[t - 1]) * 1000
     eqn -= m.vector_flux[t] * m.conversion_fugitive_efficiency / m.calorific_value
@@ -166,14 +173,46 @@ def shipping_balance(m, t):
     """
     if t == 0 and m.fixed.value is True:
         return Constraint.Skip
+    
     eqn = 0
 
+    if m.fixed.value is True:
+        eqn -= m.cumulative_charge[0]
+
     eqn += m.cumulative_charge[t]
-    eqn -= m.ship_charge_rate[t]
-    eqn += m.n_ship_sent[t] * m.ship_capacity
-    if t > 0:
-        eqn -= sum(m.ship_charge_rate[_t] for _t in range(t))
-        eqn += sum(m.n_ship_sent[_t] * m.ship_capacity for _t in range(t))
+    eqn -= sum(m.ship_charge_rate[_t] for _t in range(t+1))
+    
+    if t % 24 == 0:
+        eqn += sum(m.n_ship_sent[_t] * m.ship_capacity for _t in range(24,t+1,24))
+
+    return eqn == 0
+
+
+def port_capacity(m, t):
+    """
+    Constraint on the port capacity for the lower production problem.
+    """
+    if t == 0:
+        if m.fixed.value is True:
+            return Constraint.Skip
+        else:
+            return m.n_ship_sent[t] +  m.waiting_ships[t]== 0
+    
+    
+    eqn = 0
+    eqn += m.waiting_ships[t]
+    eqn -= m.waiting_ships[t - 1]
+    if t==1:
+        eqn -= m.ship_arrived
+
+    if t % 24 == 0:
+        eqn += m.n_ship_sent[t]
+
+    if t >= m.mean_ship_arrival_time * 24 and t % 24 == 0:
+        eqn -= m.n_ship_ordered[t - m.mean_ship_arrival_time * 24]
+
+    if t > 24 and t % 24 == 0:
+        eqn -= m.expected_ships[t]
 
     return eqn == 0
 
@@ -204,7 +243,6 @@ def upper_hydrogen_storage_limit(m, t):
     cons -= m.hydrogen_storage_capacity
 
     return cons <= 0
-
 
 def lower_vector_storage_limit(m, t):
     """
@@ -240,12 +278,13 @@ def lower_vector_ramping_limit(m, t):
     """
     if t == 0:
         return Constraint.Skip
+    
     cons = 0
-    cons += m.energy_conversion[t - 1]
-    cons -= m.energy_conversion[t]
+    cons += m.vector_flux[t - 1]
+    cons -= m.vector_flux[t]
     cons /= m.calorific_value
     cons -= (
-        m.n_active_trains_conversion[t]
+        m.n_active_trains_conversion[t-1]
         * m.single_train_limit_conversion
         * m.ramp_down_limit
     )
@@ -261,11 +300,11 @@ def upper_vector_ramping_limit(m, t):
         return Constraint.Skip
     cons = 0
 
-    cons += m.energy_conversion[t]
-    cons -= m.energy_conversion[t - 1]
+    cons += m.vector_flux[t]
+    cons -= m.vector_flux[t - 1]
     cons /= m.calorific_value
     cons -= (
-        (m.conversion_trains_number - m.n_active_trains_conversion[t])
+        (m.conversion_trains_number - m.n_active_trains_conversion[t-1])
         * m.single_train_limit_conversion
         * m.ramp_up_limit
     )
@@ -293,11 +332,13 @@ def ship_schedule_aux_lower(m, _t):
     """
     if _t == 0 and m.fixed.value is True:
         return Constraint.Skip
+    
     cons = 0
     cons += m.n_ship_aux[_t]
 
-    if _t >= 24:
-        cons -= m.ship_schedule[_t] - sum(m.n_ship_sent[t] for t in range(_t - 24, _t))
+    if _t >= m.mean_ship_arrival_time * 24:
+        cons -= m.ship_schedule[_t] - sum(m.n_ship_sent[t] for t in range(_t - m.mean_ship_arrival_time * 24 , _t + 1, 24))
+        cons -= sum(m.expected_ships[_t] for _t in range(_t - m.mean_ship_arrival_time * 24, _t + 1, 24))
 
     return cons <= 0
 
@@ -311,28 +352,10 @@ def ship_schedule_aux_upper(m, _t):
     cons = 0
     cons += m.n_ship_aux[_t]
 
-    if _t >= 24:
-        cons += m.ship_schedule[_t] - sum(m.n_ship_sent[t] for t in range(_t - 24, _t))
+    if _t >= m.mean_ship_arrival_time * 24:
+        cons += m.ship_schedule[_t] - sum(m.n_ship_sent[t] for t in range(_t - m.mean_ship_arrival_time * 24, _t + 1, 24))
+        cons += sum(m.expected_ships[_t] for _t in range(_t - m.mean_ship_arrival_time * 24, _t + 1, 24))
     return cons <= 0
-
-
-def port_capacity(m, t):
-    """
-    Constraint on the port capacity for the lower production problem.
-    """
-    if t == 0 and m.fixed.value is True:
-        return Constraint.Skip
-    cons = 0
-    if t >= 24:
-        cons += sum(m.n_ship_ordered[_t] for _t in range(0, t - 24))
-
-    cons += m.ship_arrived
-
-    cons -= sum(m.n_ship_sent[_t] for _t in range(t + 1))
-    cons -= m.waiting_ships[t]
-
-    return cons <= 0
-
 
 def ship_arrival(m, t):
     """
@@ -340,12 +363,10 @@ def ship_arrival(m, t):
     """
     if t == 0 and m.fixed.value is True:
         return Constraint.Skip
+    
     cons = 0
-    cons += m.ship_charge_rate[t] * m.ship_charge_limit / m.ship_capacity
-    cons -= m.ship_arrived
-    if t >= 24:
-        cons -= sum(m.n_ship_ordered[_t] for _t in range(0, t - 23))
-    cons += sum(m.n_ship_sent[_t] for _t in range(t + 1))
+    cons += m.ship_charge_rate[t] 
+    cons -= m.waiting_ships[t] * m.ship_capacity /  m.ship_charge_limit 
 
     return cons <= 0
 
@@ -371,29 +392,23 @@ def upper_vector_production_limit(m, t):
         return Constraint.Skip
     cons = 0
 
+    cons += m.vector_flux[t] / m.calorific_value
+    cons -= m.single_train_limit_conversion * m.n_active_trains_conversion[t]
+
+    return cons <= 0
+
+def active_trains_limit(m, t):
+    """
+    Active trains limit equation for the lower production problem.
+    """
+    if t == 0 and m.fixed.value is True:
+        return Constraint.Skip
+    cons = 0
+
     cons += m.n_active_trains_conversion[t]
     cons -= m.conversion_trains_number
 
     return cons <= 0
-
-
-def objective_1_bound(m):
-    """
-    Objective 1 bound equation for the lower production problem.
-    """
-    obj = 0
-    obj += sum(m.vector_flux[t] for t in m.grid0)
-    return obj <= 10000
-
-
-def objective_2_bound(m):
-    """
-    Objective 1 bound equation for the lower production problem.
-    """
-    obj = 0
-    obj -= sum(m.n_ship_aux[t] for t in m.grid1)
-    return obj >= -100
-
 
 def hydrogen_production_maximisation(m):
     """
@@ -404,20 +419,39 @@ def hydrogen_production_maximisation(m):
     return obj
 
 
-def shipping_target(m):
+def hourly_profit(m,t):
+
+    if t == 0:
+        if m.fixed.value is True:     
+            return Constraint.Skip
+        else: 
+            return m.cumulative_profit[t] == 0
+    
+    eqn = 0
+    eqn += m.cumulative_profit[t]
+    eqn -= m.cumulative_profit[t-1]
+    
+    eqn += m.waiting_ships[t]* (
+        m.ship_berthing_rate + m.ship_charter_rate
+    )
+    if t % 24 == 0:
+        eqn += m.n_ship_ordered[t] * m.ship_charter_rate * 35 * 24
+        eqn  -= (m.n_ship_sent[t]
+            * m.ship_capacity
+            * m.calorific_value
+            / 120
+            * 5000
+        )
+    # Adding facility costs
+    r_hourly = (1 + m.discount_factor) ** (1 / 8760) - 1
+    H = 30 * 8760
+    crf = (r_hourly * (1 + r_hourly) ** H) / ((1 + r_hourly) ** H - 1)
+    eqn += (m.capex + m.opex ) * 1000000 * crf
+    return eqn == 0
+
+
+def profit_target(m):
     """
     Shipping target equation for the lower production problem.
     """
-    obj = 0
-    obj -= (
-        sum(m.n_ship_aux[t] for t in m.grid1)
-        * m.ship_capacity
-        * m.calorific_value
-        / 120
-        * 5000
-    )
-    obj += sum(m.waiting_ships[t] for t in m.grid0) * (
-        m.ship_berthing_rate + m.ship_charter_rate
-    )
-    obj += sum(m.n_ship_ordered[t] for t in m.grid0) * (m.ship_charter_rate) * 35 * 24
-    return obj
+    return m.cumulative_profit[m.grid0.at(-1)] + sum(m.vector_flux[i] for i in range(24)) * m.calorific_value / 120 * 1000 

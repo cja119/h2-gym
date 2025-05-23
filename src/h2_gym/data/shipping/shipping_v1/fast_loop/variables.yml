@@ -66,10 +66,6 @@ variables:
   var16:
     name: n_ship_sent
     domain: positive_integer
-    time_duration: [grid0]
-  var17:
-    name: n_ship_aux
-    domain: real
     time_duration: [grid1]
   var18:
     name: vector_storage
@@ -82,7 +78,7 @@ variables:
   var20:
     name: n_ship_ordered
     domain: positive_integer
-    time_duration: [grid0]
+    time_duration: [grid1]
   var21:
     name: hydrogen_storage
     domain: positive_real
@@ -90,4 +86,8 @@ variables:
   var22:
     name: waiting_ships
     domain: positive_real
+    time_duration: [grid0]
+  var23:
+    name: cumulative_profit
+    domain: real
     time_duration: [grid0]

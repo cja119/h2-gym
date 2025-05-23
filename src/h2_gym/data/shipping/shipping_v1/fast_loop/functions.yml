@@ -29,6 +29,12 @@ equations:
   eqn10:
     name: "shipping_balance"
     domain: ["grid0"]
+  eqn11:
+    name: "port_capacity"
+    domain: ["grid0"]
+  eqn12:
+    name: "hourly_profit"
+    domain: ["grid0"]
 constraints:
   cons1:
     name: "lower_hydrogen_storage_limit"
@@ -65,20 +71,12 @@ constraints:
     domain: ["grid1"]
   cons12:
     name: "upper_vector_production_limit"
-    domain: ["grid1"]
+    domain: ["grid0"]
   cons13:
-    name: "objective_1_bound"
-    domain: []
-  cons14:
-    name: "objective_2_bound"
-    domain: []
-  cons15:
-    name: "port_capacity"
-    domain: [grid0]
+    name: "active_trains_limit"
+    domain: ["grid0"]
 objectives:
   obj1: 
-    name: "shipping_target"
-    sense: "min"
-  obj2:
-    name: "shipping_target"
-    sense: "min"
+    name: "profit_target"
+    sense: "max"
+
